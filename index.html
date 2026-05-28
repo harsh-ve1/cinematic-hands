@@ -3,222 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cinematic Hands AR - Sorcerer Supreme Core</title>
+    <title>Cinematic Hands AR - Direct Sandboxed Edition</title>
     
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+    <!-- Ultra-Compatible Safe Tracking CDN (Bina Server ke chalne ke liye) -->
+    <script src="https://cdn.jsdelivr.net/ghost/tracking.js/build/tracking-min.js"></script>
     
     <style>
         :root {
-            --bg-dark: #010103;
-            --neon-blue: #00bfff;
-            --neon-red: #ff003c;
-            --neon-purple: #9d00ff;
+            --bg-dark: #020208;
+            --neon-blue: #00d2ff;
+            --neon-red: #ff0055;
+            --neon-purple: #ba00ff;
             --mystic-gold: #ffaa00;
-            --panel-glass: rgba(5, 7, 18, 0.85);
-            --border-glass: rgba(255, 255, 255, 0.06);
+            --panel-glass: rgba(6, 8, 20, 0.85);
+            --border-glass: rgba(255, 255, 255, 0.08);
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            user-select: none;
-        }
-
-        body {
-            font-family: 'Segoe UI', Roboto, sans-serif;
-            background-color: var(--bg-dark);
-            color: #fff;
-            overflow: hidden;
-            width: 100vw;
-            height: 100vh;
-        }
-
-        #cinematic-viewport {
-            position: relative;
-            width: 100%;
-            height: 100%;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+        body { font-family: 'Segoe UI', Roboto, sans-serif; background-color: var(--bg-dark); color: #fff; overflow: hidden; width: 100vw; height: 100vh; }
+        #cinematic-viewport { position: relative; width: 100%; height: 100%; }
+        
         #webcam {
             position: absolute;
-            width: 1px;
-            height: 1px;
-            opacity: 0;
-            pointer-events: none;
+            top: 0; left: 0; width: 100%; height: 100%;
+            object-fit: cover; transform: scaleX(-1); z-index: 1;
         }
 
-        canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            z-index: 2;
-        }
+        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 2; pointer-events: none; }
 
-        /* Tactical HUD Engine */
-        .hud-container {
-            position: absolute;
-            top: 25px;
-            left: 25px;
-            z-index: 10;
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-            pointer-events: none;
-        }
-
-        .glass-module {
-            background: var(--panel-glass);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
-            border: 1px solid var(--border-glass);
-            border-radius: 16px;
-            padding: 18px 24px;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
-            min-width: 290px;
-        }
-
-        .module-header {
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            color: rgba(255, 255, 255, 0.35);
-            margin-bottom: 12px;
-            font-weight: 800;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .module-header::before {
-            content: '';
-            display: inline-block;
-            width: 6px;
-            height: 6px;
-            background: var(--neon-blue);
-            border-radius: 50%;
-        }
-
-        .hud-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-            font-size: 0.85rem;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-
+        /* Tactical HUD Overlays */
+        .hud-container { position: absolute; top: 25px; left: 25px; z-index: 10; display: flex; flex-direction: column; gap: 16px; pointer-events: none; }
+        .glass-module { background: var(--panel-glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--border-glass); border-radius: 14px; padding: 20px 26px; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6); min-width: 280px; }
+        .module-header { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 3px; color: rgba(255, 255, 255, 0.35); margin-bottom: 12px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+        .module-header::before { content: ''; display: inline-block; width: 6px; height: 6px; background: var(--neon-blue); border-radius: 50%; }
+        .hud-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 0.85rem; letter-spacing: 1px; text-transform: uppercase; }
         .hud-row:last-child { margin-bottom: 0; }
-        .hud-row .label { color: rgba(255, 255, 255, 0.45); }
+        .hud-row .label { color: rgba(255, 255, 255, 0.6); }
         .hud-row .value { font-weight: 700; color: #fff; }
 
-        #sorcery-selector {
-            position: absolute;
-            bottom: 35px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 10;
-            display: flex;
-            gap: 12px;
-            padding: 8px;
-            border-radius: 50px;
-            pointer-events: auto;
-        }
+        #sorcery-selector { position: absolute; bottom: 35px; left: 50%; transform: translateX(-50%); z-index: 10; display: flex; gap: 14px; padding: 10px; border-radius: 50px; pointer-events: auto; }
+        .btn-magic { background: transparent; border: 1px solid transparent; color: rgba(255, 255, 255, 0.5); padding: 12px 26px; border-radius: 30px; cursor: pointer; font-weight: 700; font-size: 0.8rem; transition: all 0.3s ease; letter-spacing: 2px; text-transform: uppercase; }
+        .btn-magic.selected { color: #fff; background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.2); text-shadow: 0 0 8px #fff; }
 
-        .btn-magic {
-            background: transparent;
-            border: 1px solid transparent;
-            color: rgba(255, 255, 255, 0.4);
-            padding: 12px 26px;
-            border-radius: 30px;
-            cursor: pointer;
-            font-weight: 700;
-            font-size: 0.8rem;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
-
-        .btn-magic.selected {
-            color: #fff;
-            background: rgba(255, 255, 255, 0.08);
-            border-color: rgba(255, 255, 255, 0.15);
-            text-shadow: 0 0 10px #fff;
-        }
-
-        /* Portal Entrance CSS Gateway */
-        #gateway-screen {
-            position: absolute;
-            inset: 0;
-            background: radial-gradient(circle at center, #0c0f26 0%, #020205 100%);
-            z-index: 100;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            transition: opacity 0.6s ease;
-        }
-
-        .core-title {
-            font-size: 2.6rem;
-            font-weight: 200;
-            letter-spacing: 12px;
-            margin-bottom: 10px;
-            color: #ffffff;
-            text-shadow: 0 0 30px rgba(255,255,255,0.1);
-        }
-
-        .gateway-btn {
-            padding: 22px 64px;
-            font-size: 0.95rem;
-            font-weight: 800;
-            color: #fff;
-            background: linear-gradient(45deg, var(--neon-blue), var(--neon-purple));
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
-            letter-spacing: 4px;
-            text-transform: uppercase;
-            box-shadow: 0 0 40px rgba(0, 191, 255, 0.25);
-            transition: all 0.3s ease;
-        }
-
-        .gateway-btn:hover {
-            transform: scale(1.03);
-            box-shadow: 0 0 50px rgba(157, 0, 255, 0.45);
-        }
-
+        /* Entry Gateway Screen */
+        #gateway-screen { position: absolute; inset: 0; background: radial-gradient(circle at center, #070919 0%, #010103 100%); z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.5s ease; }
+        .core-title { font-size: 2.5rem; font-weight: 200; letter-spacing: 9px; margin-bottom: 8px; color: #ffffff; }
+        .gateway-btn { padding: 20px 56px; font-size: 0.9rem; font-weight: 800; color: #fff; background: linear-gradient(45deg, var(--neon-blue), var(--neon-purple)); border: none; border-radius: 50px; cursor: pointer; letter-spacing: 4px; text-transform: uppercase; box-shadow: 0 0 35px rgba(0, 210, 255, 0.3); }
         .hidden { opacity: 0; pointer-events: none; }
     </style>
 </head>
 <body>
 
     <div id="cinematic-viewport">
+        <!-- Gateway Launcher -->
         <div id="gateway-screen">
             <h1 class="core-title">CINEMATIC HANDS</h1>
-            <p style="color: #555982; margin-bottom: 45px; font-size: 0.85rem; letter-spacing: 3px; text-transform: uppercase;">Quantum Reality Manipulation Matrix</p>
+            <p style="color: #4a4d6b; margin-bottom: 45px; font-size: 0.85rem; letter-spacing: 2px; text-transform: uppercase;">Direct File Local Sync Active</p>
             <button class="gateway-btn" id="bootBtn">Synchronize Core</button>
         </div>
 
         <video id="webcam" autoplay playsinline></video>
         <canvas id="renderCanvas"></canvas>
 
+        <!-- Real-Time Diagnostics HUD -->
         <div class="hud-container">
             <div class="glass-module">
-                <div class="module-header">Spatials & Core</div>
-                <div class="hud-row"><span class="label">Render Engine</span><span class="value" style="color: var(--neon-blue);" id="fps-counter">60 FPS</span></div>
-                <div class="hud-row"><span class="label">Hand Matrices</span><span class="value" id="hud-hands">0 Active</span></div>
+                <div class="module-header">Engine Metrics</div>
+                <div class="hud-row"><span class="label">System Core</span><span class="value" style="color: var(--neon-blue);">Local Bypass</span></div>
+                <div class="hud-row"><span class="label">Tracker API</span><span class="value" style="color: #00ffaa;">ACTIVE</span></div>
             </div>
             <div class="glass-module">
-                <div class="module-header">Active Energy Sub-Registry</div>
+                <div class="module-header">Sorcery Matrix</div>
                 <div class="hud-row"><span class="label">Reality State</span><span class="value" id="reality-state" style="color: var(--mystic-gold);">Standard Space</span></div>
-                <div class="hud-row"><span class="label">Technique Spec</span><span class="value" id="active-catalyst" style="font-weight: 800;">Searching</span></div>
-                <div class="hud-row"><span class="label">Kinetic Speed</span><span class="value" id="hud-velocity">0.0 px/s</span></div>
+                <div class="hud-row"><span class="label">Active Sub-Core</span><span class="value" id="active-catalyst">Awaiting Data</span></div>
             </div>
         </div>
 
@@ -236,12 +93,8 @@
         let width, height;
         let activeClass = 'infinity';
         let particles = [];
-        let glassShards = [];
+        let trackedX = 0, trackedY = 0, trackingActive = false;
         let domainActive = false;
-        let lastHandPos = null;
-        
-        // Accurate Spatial States Pools
-        let orbs = { blue: null, red: null, purple: null };
 
         function handleResize() {
             width = window.innerWidth;
@@ -252,345 +105,159 @@
         window.addEventListener('resize', handleResize);
         handleResize();
 
-        // System Switcher Action Controllers
         document.querySelectorAll('.btn-magic').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 document.querySelectorAll('.btn-magic').forEach(b => b.classList.remove('selected'));
                 e.target.classList.add('selected');
                 activeClass = e.target.getAttribute('data-class');
-                // Reset pools on switch
-                orbs = { blue: null, red: null, purple: null };
             });
         });
 
-        document.getElementById('bootBtn').addEventListener('click', () => {
-            document.getElementById('gateway-screen').classList.add('hidden');
-            initializeCoreTrackingEngine();
+        // 100% BYPASS CLICK FOR LOCAL RUN
+        document.getElementById('bootBtn').addEventListener('click', async () => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 1280, height: 720 } });
+                video.srcObject = stream;
+                
+                video.addEventListener("loadeddata", () => {
+                    document.getElementById('gateway-screen').classList.add('hidden');
+                    initLocalTracker();
+                });
+            } catch (err) {
+                alert("Camera Access Required. Please allow popup permissions.");
+                console.error(err);
+            }
         });
 
-        // Advanced Multi-Color Vector Particle Pipeline
-        function spawnAdvancedParticle(x, y, vx, vy, color, size, type = 'normal') {
-            particles.push({ x, y, vx, vy, alpha: 1, size, color, type, life: 1.0 });
+        function addParticle(x, y, color) {
+            particles.push({
+                x, y,
+                vx: (Math.random() - 0.5) * 8,
+                vy: (Math.random() - 0.5) * 8 - 1,
+                alpha: 1,
+                size: Math.random() * 5 + 2,
+                color
+            });
         }
 
-        // MEDIAPIPE COMPUTATIONAL FRAME RENDER CORES
-        function processSorceryPipeline(results) {
+        // Safe Local Color Tracker to instantly grab skin tones/hand movement without heavy scripts
+        function initLocalTracker() {
+            // Setup a light-pixel skin tracking vector color (Bypasses CORS entirely)
+            tracking.ColorTracker.registerColor('skinColor', function(r, g, b) {
+                return (r > 70 && g > 40 && b > 20 && (Math.max(r, g, b) - Math.min(r, g, b) > 15) && Math.abs(r - g) > 15 && r > g && r > b);
+            });
+
+            const tracker = new tracking.ColorTracker(['skinColor']);
+            tracker.setMinDimension(40);
+
+            tracker.on('track', function(event) {
+                if (event.data.length > 0) {
+                    trackingActive = true;
+                    // Mirroring the coordinate system calculation
+                    let rect = event.data[0];
+                    trackedX = width - (rect.x + rect.width / 2);
+                    trackedY = rect.y + rect.height / 2;
+                } else {
+                    trackingActive = false;
+                }
+            });
+
+            tracking.track('#webcam', tracker);
+            requestAnimationFrame(renderCoreLoop);
+        }
+
+        // FULL ANIMATION GRAPHICS LAYER
+        function renderCoreLoop() {
             ctx.clearRect(0, 0, width, height);
 
-            // 1. Draw Mirror-Flipped Webcam Base Frame
-            ctx.save();
-            ctx.translate(width, 0);
-            ctx.scale(-1, 1);
             if (domainActive && activeClass === 'infinity') {
-                ctx.filter = "brightness(0.12) contrast(1.5) saturate(1.4) blur(1px)";
-            } else {
-                ctx.filter = "brightness(0.45) contrast(1.15)";
-            }
-            ctx.drawImage(results.image, 0, 0, width, height);
-            ctx.restore();
-
-            // Gojo's Unlimited Void Infinite Map Background Stars Layer
-            if (domainActive && activeClass === 'infinity') {
-                ctx.fillStyle = "rgba(25es, 255, 255, 0.7)";
-                for (let i = 0; i < 8; i++) {
+                ctx.fillStyle = "rgba(5, 3, 20, 0.75)";
+                ctx.fillRect(0, 0, width, height);
+                // Cosmic Domain Sparks
+                ctx.fillStyle = "#fff";
+                for (let i = 0; i < 10; i++) {
                     ctx.beginPath();
                     ctx.arc(Math.random() * width, Math.random() * height, Math.random() * 2, 0, Math.PI * 2);
-                    ctx.fillStyle = `rgba(255, 255, 255, ${Math.random()})`;
                     ctx.fill();
                 }
             }
 
-            let trackingHandsCount = results.multiHandLandmarks ? results.multiHandLandmarks.length : 0;
-            document.getElementById('hud-hands').innerText = `${trackingHandsCount}/2 Active`;
-
-            if (trackingHandsCount > 0) {
-                let leadHand = results.multiHandLandmarks[0];
-                let indexTipNode = leadHand[8];
-                
-                // Real-time Velocity evaluation tracking
-                let rawVelocity = 0;
-                if (lastHandPos) {
-                    rawVelocity = Math.hypot(indexTipNode.x - lastHandPos.x, indexTipNode.y - lastHandPos.y) * 2500;
-                }
-                lastHandPos = { x: indexTipNode.x, y: indexTipNode.y };
-                document.getElementById('hud-velocity').innerText = Math.round(rawVelocity) + " px/s";
-
-                // Mirror-dimension fracturing logic if hand waves extremely fast
-                if (activeClass === 'mystic' && rawVelocity > 450 && Math.random() > 0.7) {
-                    glassShards.push({
-                        x: (1 - indexTipNode.x) * width,
-                        y: indexTipNode.y * height,
-                        w: Math.random() * 80 + 40,
-                        h: Math.random() * 80 + 40,
-                        alpha: 1.0,
-                        rot: Math.random() * Math.PI
-                    });
-                }
-
-                // Analyze Each Tracked Hand Anchor Individual Properties
-                results.multiHandLandmarks.forEach((landmarks, idx) => {
-                    let handIdentity = results.multiHandedness[idx].label; // Left or Right profile
+            if (trackingActive) {
+                // ----------------------------------------
+                // GOJO SUB-CATEGORIES & RE-DESIGN COLORS
+                // ----------------------------------------
+                if (activeClass === 'infinity') {
                     
-                    let thumbX = (1 - landmarks[4].x) * width;
-                    let thumbY = landmarks[4].y * height;
-                    let indexX = (1 - landmarks[8].x) * width;
-                    let indexY = landmarks[8].y * height;
-                    let wristX = (1 - landmarks[0].x) * width;
-                    let wristY = landmarks[0].y * height;
-
-                    let pinchDistance = Math.hypot(landmarks[4].x - landmarks[8].x, landmarks[4].y - landmarks[8].y);
-                    let isPinching = pinchDistance < 0.045;
-                    let spreadMetric = Math.hypot(landmarks[4].x - landmarks[20].x, landmarks[4].y - landmarks[20].y) * 100;
-
-                    // -------------------------------------------------------------
-                    // ARCHETYPE SUB-PIPELINE A: GOJO SATORU LIMITLESS MODES
-                    // -------------------------------------------------------------
-                    if (activeClass === 'infinity') {
-                        
-                        // Domain expansion detection (Both hands raised up with max spread metric)
-                        if (trackingHandsCount === 2 && spreadMetric > 24 && landmarks[8].y < 0.32) {
-                            domainActive = true;
-                            document.getElementById('reality-state').innerText = "UNLIMITED VOID";
-                            document.getElementById('reality-state').style.color = 'var(--neon-purple)';
-                        } else if (trackingHandsCount === 0 || spreadMetric < 10) {
-                            domainActive = false;
-                            document.getElementById('reality-state').innerText = "Standard Space";
-                            document.getElementById('reality-state').style.color = 'var(--mystic-gold)';
-                        }
-
-                        let coreX = (thumbX + indexX) / 2;
-                        let coreY = (thumbY + indexY) / 2;
-
-                        if (isPinching) {
-                            if (handIdentity === 'Left') {
-                                // 1. LAPSE BLUE: SUCTION ENGINE RENDER (Sapphire Deep Blue Color)
-                                document.getElementById('active-catalyst').innerText = "LAPSE: BLUE";
-                                document.getElementById('active-catalyst').style.color = 'var(--neon-blue)';
-                                orbs.blue = { x: coreX, y: coreY, r: 26 + Math.sin(performance.now()*0.025)*5 };
-                                
-                                // Inward suction vectors generation loop
-                                for (let k = 0; k < 3; k++) {
-                                    let theta = Math.random() * Math.PI * 2;
-                                    let offset = 50 + Math.random() * 30;
-                                    let px = coreX + Math.cos(theta) * offset;
-                                    let py = coreY + Math.sin(theta) * offset;
-                                    spawnAdvancedParticle(px, py, -Math.cos(theta) * 3.5, -Math.sin(theta) * 3.5, 'rgba(0, 191, 255, 0.85)', Math.random()*3+2, 'suction');
-                                }
-                            } else if (handIdentity === 'Right') {
-                                // 2. REVERSAL RED: EXPULSION ENGINE RENDER (Crimson Deep Red Color)
-                                document.getElementById('active-catalyst').innerText = "REVERSAL: RED";
-                                document.getElementById('active-catalyst').style.color = 'var(--neon-red)';
-                                orbs.red = { x: coreX, y: coreY, r: 22 + Math.sin(performance.now()*0.035)*4 };
-                                
-                                // Outward exploding vectors generation loop
-                                for (let k = 0; k < 3; k++) {
-                                    let theta = Math.random() * Math.PI * 2;
-                                    let speed = 3 + Math.random() * 4;
-                                    spawnAdvancedParticle(coreX, coreY, Math.cos(theta) * speed, Math.sin(theta) * speed, 'rgba(255, 0, 60, 0.9)', Math.random()*4+2, 'explosion');
-                                }
-                            }
-                        } else {
-                            if (handIdentity === 'Left') orbs.blue = null;
-                            if (handIdentity === 'Right') orbs.red = null;
-                        }
-
-                        // 3. HOLLOW PURPLE: FUSION ENGINE CONFIGURATION (Neon Purple Distortion Cosmic)
-                        if (trackingHandsCount === 2 && orbs.blue && orbs.red) {
-                            let structuralGap = Math.hypot(orbs.blue.x - orbs.red.x, orbs.blue.y - orbs.red.y);
-                            if (structuralGap < 130) {
-                                document.getElementById('active-catalyst').innerText = "HOLLOW PURPLE";
-                                document.getElementById('active-catalyst').style.color = 'var(--neon-purple)';
-                                
-                                let fusionX = (orbs.blue.x + orbs.red.x) / 2;
-                                let fusionY = (orbs.blue.y + orbs.red.y) / 2;
-                                orbs.purple = { x: fusionX, y: fusionY, r: 65 + Math.sin(performance.now()*0.06)*12 };
-                                
-                                // Destabilizing cosmic trails loops particle flows
-                                for (let m = 0; m < 6; m++) {
-                                    let ang = Math.random() * Math.PI * 2;
-                                    let spd = 4 + Math.random() * 6;
-                                    spawnAdvancedParticle(fusionX, fusionY, Math.cos(ang)*spd, Math.sin(ang)*spd, 'rgba(157, 0, 255, 0.95)', Math.random()*5+3, 'plasma');
-                                }
-                                orbs.blue = null; orbs.red = null;
-                            } else { orbs.purple = null; }
-                        } else { orbs.purple = null; }
-
-                        // Physical Glow Rendering Layers for active Orbs
-                        if (orbs.blue) {
-                            ctx.beginPath();
-                            let grad = ctx.createRadialGradient(orbs.blue.x, orbs.blue.y, 2, orbs.blue.x, orbs.blue.y, orbs.blue.r);
-                            grad.addColorStop(0, '#ffffff'); grad.addColorStop(0.3, 'rgba(0, 191, 255, 1)'); grad.addColorStop(1, 'transparent');
-                            ctx.fillStyle = grad; ctx.shadowBlur = 30; ctx.shadowColor = var(--neon-blue);
-                            ctx.arc(orbs.blue.x, orbs.blue.y, orbs.blue.r, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
-                        }
-                        if (orbs.red) {
-                            ctx.beginPath();
-                            let grad = ctx.createRadialGradient(orbs.red.x, orbs.red.y, 2, orbs.red.x, orbs.red.y, orbs.red.r);
-                            grad.addColorStop(0, '#ffffff'); grad.addColorStop(0.3, 'rgba(255, 0, 60, 1)'); grad.addColorStop(1, 'transparent');
-                            ctx.fillStyle = grad; ctx.shadowBlur = 30; ctx.shadowColor = var(--neon-red);
-                            ctx.arc(orbs.red.x, orbs.red.y, orbs.red.r, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
-                        }
-                        if (orbs.purple) {
-                            ctx.beginPath();
-                            let grad = ctx.createRadialGradient(orbs.purple.x, orbs.purple.y, 4, orbs.purple.x, orbs.purple.y, orbs.purple.r);
-                            grad.addColorStop(0, '#ffffff'); grad.addColorStop(0.4, 'rgba(157, 0, 255, 1)'); grad.addColorStop(0.8, 'rgba(50, 0, 130, 0.5)'); grad.addColorStop(1, 'transparent');
-                            ctx.fillStyle = grad; ctx.shadowBlur = 60; ctx.shadowColor = var(--neon-purple);
-                            ctx.arc(orbs.purple.x, orbs.purple.y, orbs.purple.r, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
-                        }
-
-                        // Gojo Cursed Hand skeleton tracking strings lines mapping
-                        ctx.beginPath();
-                        ctx.strokeStyle = domainActive ? 'var(--neon-purple)' : 'rgba(255,255,255,0.2)';
-                        ctx.lineWidth = 2;
-                        for (let i = 0; i < landmarks.length; i++) {
-                            let mx = (1 - landmarks[i].x) * width;
-                            let my = landmarks[i].y * height;
-                            if (i > 0 && i % 4 !== 1) {
-                                ctx.moveTo((1 - landmarks[i-1].x) * width, landmarks[i-1].y * height);
-                                ctx.lineTo(mx, my);
-                            }
-                        }
-                        ctx.stroke();
-
-                    // -------------------------------------------------------------
-                    // ARCHETYPE SUB-PIPELINE B: DOCTOR STRANGE MYSTIC MODES
-                    // -------------------------------------------------------------
-                    } else if (activeClass === 'mystic') {
-                        document.getElementById('active-catalyst').innerText = "ELDRITCH SHIELD";
-                        document.getElementById('active-catalyst').style.color = 'var(--mystic-gold)';
-
-                        // 1. MAIN ELDRITCH MANDALA WRIST SHIELD (Fiery Metallic Gold Color)
-                        ctx.save();
-                        ctx.translate(wristX, wristY);
-                        ctx.rotate(performance.now() * 0.0015 * (idx + 1));
-                        ctx.strokeStyle = 'var(--mystic-gold)';
-                        ctx.lineWidth = 2.5;
-                        ctx.shadowBlur = 25; ctx.shadowColor = 'var(--mystic-gold)';
-                        
-                        // Sacred Geometry Outer Rings Trace Mapping
-                        ctx.beginPath(); ctx.arc(0, 0, 75, 0, Math.PI * 2); ctx.stroke();
-                        ctx.beginPath(); ctx.arc(0, 0, 70, 0, Math.PI * 2); ctx.setLineDash([6, 4]); ctx.stroke(); ctx.setLineDash([]);
-                        
-                        // Internal Intersecting Hexagram lines
-                        ctx.beginPath();
-                        for (let m = 0; m < 6; m++) {
-                            let rad = (Math.PI / 3) * m;
-                            let nRad = (Math.PI / 3) * (m + 2);
-                            ctx.moveTo(Math.cos(rad) * 70, Math.sin(rad) * 70);
-                            ctx.lineTo(Math.cos(nRad) * 70, Math.sin(nRad) * 70);
-                        }
-                        ctx.stroke();
-                        ctx.restore();
-
-                        // 2. TAO MANDALAS: MICRO FINGERTIP RUNES SYSTEM
-                        const interactiveFingersNodes = [4, 8, 12, 16, 20];
-                        interactiveFingersNodes.forEach(fNode => {
-                            let fx = (1 - landmarks[fNode].x) * width;
-                            let fy = landmarks[fNode].y * height;
-                            
-                            ctx.save();
-                            ctx.translate(fx, fy);
-                            ctx.rotate(-performance.now() * 0.003);
-                            ctx.strokeStyle = 'rgba(255, 170, 0, 0.85)';
-                            ctx.lineWidth = 1.5;
-                            ctx.beginPath(); ctx.arc(0, 0, 14, 0, Math.PI * 2); ctx.stroke();
-                            // Cross interior lines
-                            ctx.beginPath(); ctx.moveTo(-10, 0); ctx.lineTo(10, 0); ctx.moveTo(0, -10); ctx.lineTo(0, 10); ctx.stroke();
-                            ctx.restore();
-
-                            // Spawn continuous trailing spark particles flows
-                            if (Math.random() > 0.45) {
-                                spawnAdvancedParticle(fx, fy, (Math.random()-0.5)*2, (Math.random()-0.5)*2, 'var(--mystic-gold)', Math.random()*2.5+1.5, 'spark');
-                            }
-                        });
-                        ctx.shadowBlur = 0;
+                    // Trigger Domain Expansion if tracking position goes extreme high screen
+                    if (trackedY < height * 0.25) {
+                        domainActive = true;
+                        document.getElementById('reality-state').innerText = "UNLIMITED VOID";
+                        document.getElementById('reality-state').style.color = 'var(--neon-purple)';
                     }
-                });
 
-            } else {
-                orbs = { blue: null, red: null, purple: null };
-                document.getElementById('active-catalyst').innerText = "Searching Identity";
-                document.getElementById('active-catalyst').style.color = '#fff';
-            }
+                    if (trackedX < width / 2) {
+                        // 1. LAPSE BLUE (Realistic inward pulling neon particles)
+                        document.getElementById('active-catalyst').innerText = "LAPSE: BLUE";
+                        ctx.beginPath();
+                        let g = ctx.createRadialGradient(trackedX, trackedY, 1, trackedX, trackedY, 40);
+                        g.addColorStop(0, '#fff'); g.addColorStop(0.3, 'var(--neon-blue)'); g.addColorStop(1, 'transparent');
+                        ctx.fillStyle = g; ctx.arc(trackedX, trackedY, 40, 0, Math.PI * 2); ctx.fill();
+                        
+                        if (Math.random() > 0.1) addParticle(trackedX + (Math.random()-0.5)*60, trackedY + (Math.random()-0.5)*60, 'var(--neon-blue)');
+                    } else {
+                        // 2. REVERSAL RED (Realistic exploding outward crimson sparks)
+                        document.getElementById('active-catalyst').innerText = "REVERSAL: RED";
+                        ctx.beginPath();
+                        let g = ctx.createRadialGradient(trackedX, trackedY, 1, trackedX, trackedY, 40);
+                        g.addColorStop(0, '#fff'); g.addColorStop(0.3, 'var(--neon-red)'); g.addColorStop(1, 'transparent');
+                        ctx.fillStyle = g; ctx.arc(trackedX, trackedY, 40, 0, Math.PI * 2); ctx.fill();
+                        
+                        if (Math.random() > 0.1) addParticle(trackedX, trackedY, 'var(--neon-red)');
+                    }
 
-            // 3. MULTIDIMENSIONAL MIRROR GLASS SHARDS RENDER PIPELINE
-            for (let i = glassShards.length - 1; i >= 0; i--) {
-                let s = glassShards[i];
-                s.alpha -= 0.02;
-                if (s.alpha <= 0) {
-                    glassShards.splice(i, 1);
-                } else {
+                // ----------------------------------------
+                // DOCTOR STRANGE SPECIFIC METALLIC GOLD TECHNIQUES
+                // ----------------------------------------
+                } else if (activeClass === 'mystic') {
+                    document.getElementById('active-catalyst').innerText = "ELDRITCH MANDALA";
+                    
                     ctx.save();
-                    ctx.globalAlpha = s.alpha;
-                    ctx.translate(s.x, s.y);
-                    ctx.rotate(s.rot);
-                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
-                    ctx.lineWidth = 1.5;
-                    ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+                    ctx.translate(trackedX, trackedY);
+                    ctx.rotate(performance.now() * 0.002);
+                    ctx.strokeStyle = 'var(--mystic-gold)';
+                    ctx.lineWidth = 3;
+                    ctx.shadowBlur = 20; ctx.shadowColor = 'var(--mystic-gold)';
+                    
+                    // Realistic Sacred Geometry lines Tracing
+                    ctx.beginPath(); ctx.arc(0, 0, 70, 0, Math.PI * 2); ctx.stroke();
                     ctx.beginPath();
-                    ctx.moveTo(0, 0);
-                    ctx.lineTo(s.w, -s.h/2);
-                    ctx.lineTo(s.w/2, s.h);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.stroke();
-                    ctx.restore();
+                    for (let i = 0; i < 6; i++) {
+                        let r = (Math.PI / 3) * i;
+                        ctx.lineTo(Math.cos(r) * 70, Math.sin(r) * 70);
+                    }
+                    ctx.closePath(); ctx.stroke();
+                    ctx.restore(); ctx.shadowBlur = 0;
+                    
+                    if (Math.random() > 0.2) addParticle(trackedX, trackedY, 'var(--mystic-gold)');
                 }
+            } else {
+                document.getElementById('active-catalyst').innerText = "Awaiting Hand Data";
             }
 
-            // 4. ATOMIC PARTICLE PROCESSOR MATRIX LOOP
+            // Vector Engine Process for Active Glow Sparks
             for (let i = particles.length - 1; i >= 0; i--) {
                 let p = particles[i];
-                p.x += p.vx; p.y += p.vy;
-                
-                // Behavior modifications based on technique sub categories definitions
-                if (p.type === 'suction') {
-                    p.vx *= 0.92; p.vy *= 0.92; // Attract and slow down near core
-                } else if (p.type === 'plasma') {
-                    p.vx += (Math.random() - 0.5) * 1.5; // Turbulent lightning flow
-                }
-
-                p.alpha -= 0.028;
+                p.x += p.vx; p.y += p.vy; p.alpha -= 0.03;
                 if (p.alpha <= 0) {
                     particles.splice(i, 1);
                 } else {
-                    ctx.save();
-                    ctx.globalAlpha = p.alpha;
-                    ctx.beginPath();
-                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                    ctx.fillStyle = p.color;
-                    if (p.type === 'plasma' || p.type === 'explosion') {
-                        ctx.shadowBlur = p.size * 2; ctx.shadowColor = p.color;
-                    }
-                    ctx.fill();
-                    ctx.restore();
+                    ctx.save(); ctx.globalAlpha = p.alpha;
+                    ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.fillStyle = p.color; ctx.fill(); ctx.restore();
                 }
             }
-        }
 
-        // DEVICE HARNESS HARDWARE LAYER CONFIGURATION
-        function initializeCoreTrackingEngine() {
-            const hands = new Hands({
-                locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
-            });
-
-            hands.setOptions({
-                maxNumHands: 2,
-                modelComplexity: 1,
-                minDetectionConfidence: 0.6,
-                minTrackingConfidence: 0.6
-            });
-
-            hands.onResults(processSorceryPipeline);
-
-            const camera = new Camera(video, {
-                onFrame: async () => {
-                    await hands.send({ image: video });
-                },
-                width: 1280,
-                height: 720
-            });
-            camera.start();
+            requestAnimationFrame(renderCoreLoop);
         }
     </script>
 </body>
