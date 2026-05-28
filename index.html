@@ -3,15 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cinematic Hands AR - Safe Native Edition</title>
+    <title>Cinematic Hands AR - Absolute Tracking Core</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+    
     <style>
         :root {
-            --bg-dark: #020208;
+            --bg-dark: #020206;
             --neon-blue: #00d2ff;
             --neon-red: #ff0055;
             --neon-purple: #ba00ff;
             --mystic-gold: #ffaa00;
-            --panel-glass: rgba(6, 8, 20, 0.85);
+            --panel-glass: rgba(8, 10, 25, 0.8);
             --border-glass: rgba(255, 255, 255, 0.08);
         }
 
@@ -39,13 +43,10 @@
 
         #webcam {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transform: scaleX(-1);
-            z-index: 1;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+            pointer-events: none;
         }
 
         canvas {
@@ -56,10 +57,9 @@
             height: 100%;
             object-fit: cover;
             z-index: 2;
-            pointer-events: none;
         }
 
-        /* Tactical HUD Overlays */
+        /* Quantum HUD Overlays */
         .hud-container {
             position: absolute;
             top: 25px;
@@ -67,7 +67,7 @@
             z-index: 10;
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 14px;
             pointer-events: none;
         }
 
@@ -77,8 +77,8 @@
             -webkit-backdrop-filter: blur(20px);
             border: 1px solid var(--border-glass);
             border-radius: 14px;
-            padding: 20px 26px;
-            box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.6);
+            padding: 18px 24px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
             min-width: 280px;
         }
 
@@ -87,7 +87,7 @@
             text-transform: uppercase;
             letter-spacing: 3px;
             color: rgba(255, 255, 255, 0.35);
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             font-weight: 800;
             display: flex;
             align-items: center;
@@ -101,21 +101,20 @@
             height: 6px;
             background: var(--neon-blue);
             border-radius: 50%;
-            box-shadow: 0 0 8px var(--neon-blue);
         }
 
         .hud-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             font-size: 0.85rem;
             letter-spacing: 1px;
             text-transform: uppercase;
         }
 
         .hud-row:last-child { margin-bottom: 0; }
-        .hud-row .label { color: rgba(255, 255, 255, 0.6); }
+        .hud-row .label { color: rgba(255, 255, 255, 0.5); }
         .hud-row .value { font-weight: 700; color: #fff; }
 
         #sorcery-selector {
@@ -125,8 +124,8 @@
             transform: translateX(-50%);
             z-index: 10;
             display: flex;
-            gap: 14px;
-            padding: 10px;
+            gap: 12px;
+            padding: 8px;
             border-radius: 50px;
             pointer-events: auto;
         }
@@ -135,7 +134,7 @@
             background: transparent;
             border: 1px solid transparent;
             color: rgba(255, 255, 255, 0.5);
-            padding: 12px 26px;
+            padding: 10px 24px;
             border-radius: 30px;
             cursor: pointer;
             font-weight: 700;
@@ -152,7 +151,7 @@
             text-shadow: 0 0 8px #fff;
         }
 
-        /* Entry Gateway Screen */
+        /* Portal Entrance */
         #gateway-screen {
             position: absolute;
             inset: 0;
@@ -166,7 +165,7 @@
         }
 
         .core-title {
-            font-size: 2.5rem;
+            font-size: 2.4rem;
             font-weight: 200;
             letter-spacing: 9px;
             margin-bottom: 8px;
@@ -195,7 +194,7 @@
     <div id="cinematic-viewport">
         <div id="gateway-screen">
             <h1 class="core-title">CINEMATIC HANDS</h1>
-            <p style="color: #4a4d6b; margin-bottom: 45px; font-size: 0.85rem; letter-spacing: 2px; text-transform: uppercase;" id="status-text">Click below to bypass proxy security and start webcam</p>
+            <p style="color: #4a4d6b; margin-bottom: 45px; font-size: 0.85rem; letter-spacing: 2px; text-transform: uppercase;">Tracking Engine Verification</p>
             <button class="gateway-btn" id="bootBtn">Synchronize Core</button>
         </div>
 
@@ -204,15 +203,15 @@
 
         <div class="hud-container">
             <div class="glass-module">
-                <div class="module-header">Engine Metrics</div>
-                <div class="hud-row"><span class="label">System Engine</span><span class="value" style="color: var(--neon-blue);">Native WebGL</span></div>
-                <div class="hud-row"><span class="label">Tracking Core</span><span class="value" style="color: #00ffaa;">ONLINE</span></div>
+                <div class="module-header">Tracking Metrics</div>
+                <div class="hud-row"><span class="label">Render Engine</span><span class="value" style="color: var(--neon-blue);">60 FPS</span></div>
+                <div class="hud-row"><span class="label">Active Hands</span><span class="value" id="hud-hands">0 Detected</span></div>
             </div>
             <div class="glass-module">
-                <div class="module-header">Sorcery Energy Matrix</div>
+                <div class="module-header">Energy Signature</div>
                 <div class="hud-row"><span class="label">Reality State</span><span class="value" id="reality-state" style="color: var(--mystic-gold);">Standard Space</span></div>
-                <div class="hud-row"><span class="label">Active Core</span><span class="value" id="active-catalyst">Tracking Ready</span></div>
-                <div class="hud-row"><span class="label">Quantum Mod</span><span class="value" id="mod-status">Interactive</span></div>
+                <div class="hud-row"><span class="label">Cursed Energy</span><span class="value" id="active-catalyst">Searching Identity</span></div>
+                <div class="hud-row"><span class="label">Spread Space</span><span class="value" id="hud-spread">0%</span></div>
             </div>
         </div>
 
@@ -230,8 +229,10 @@
         let width, height;
         let activeClass = 'infinity';
         let particles = [];
-        let mouseX = 0, mouseY = 0, isPressing = false;
         let domainActive = false;
+        
+        // Tracking Orbs State Management
+        let blueOrb = null, redOrb = null, purpleOrb = null;
 
         function handleResize() {
             width = window.innerWidth;
@@ -242,156 +243,232 @@
         window.addEventListener('resize', handleResize);
         handleResize();
 
-        // Control Panel Toggles
+        // Archetype Selector Control
         document.querySelectorAll('.btn-magic').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 document.querySelectorAll('.btn-magic').forEach(b => b.classList.remove('selected'));
                 e.target.classList.add('selected');
                 activeClass = e.target.getAttribute('data-class');
-                document.getElementById('active-catalyst').innerText = activeClass === 'infinity' ? 'Limitless Core' : 'Eldritch Core';
             });
         });
 
-        // 100% SAFE CAMERA RUN AND TRIGGER
-        document.getElementById('bootBtn').addEventListener('click', async () => {
-            try {
-                const constraints = { video: { width: 1280, height: 720, facingMode: "user" } };
-                const stream = await navigator.mediaDevices.getUserMedia(constraints);
-                video.srcObject = stream;
-                
-                video.addEventListener("loadeddata", () => {
-                    document.getElementById('gateway-screen').classList.add('hidden');
-                    // Start render frame loop once camera pipeline is active
-                    requestAnimationFrame(animationLoop);
-                });
-            } catch (err) {
-                alert("Camera permission block. Please check browser pop-up permissions settings.");
-                console.error(err);
-            }
-        });
-
-        // Interactive Tracking Fallback (Mouse/Touch simulate hands movement instantly)
-        window.addEventListener('mousemove', (e) => {
-            mouseX = e.clientX;
-            mouseY = e.clientY;
-        });
-        window.addEventListener('mousedown', () => isPressing = true);
-        window.addEventListener('mouseup', () => isPressing = false);
-        
-        // Double click to trigger Gojo's Infinite Void Domain Expansion
-        window.addEventListener('dblclick', () => {
-            if(activeClass === 'infinity') {
-                domainActive = !domainActive;
-                document.getElementById('reality-state').innerText = domainActive ? "UNLIMITED VOID" : "Standard Space";
-                document.getElementById('reality-state').style.color = domainActive ? 'var(--neon-purple)' : 'var(--mystic-gold)';
-            }
+        // Initialize Core Click Pipeline
+        document.getElementById('bootBtn').addEventListener('click', () => {
+            document.getElementById('gateway-screen').classList.add('hidden');
+            startTrackingEngine();
         });
 
         function addParticle(x, y, color) {
             particles.push({
                 x: x, y: y,
                 vx: (Math.random() - 0.5) * 6,
-                vy: (Math.random() - 0.5) * 6,
+                vy: (Math.random() - 0.5) * 6 - 1,
                 alpha: 1,
                 size: Math.random() * 4 + 2,
                 color: color
             });
         }
 
-        // RENDER PROCESSING LOOP
-        function animationLoop() {
+        // MEDIAPIPE DEEP RENDER AND ANALYSIS FRAME ENGINE
+        function onResults(results) {
             ctx.clearRect(0, 0, width, height);
 
-            // Screen filter modifications based on state changes
+            // Draw Webcam Horizontal Mirror Viewport
+            ctx.save();
+            ctx.translate(width, 0);
+            ctx.scale(-1, 1);
+            ctx.filter = domainActive ? "brightness(0.15) contrast(1.4) blur(1px)" : "brightness(0.4) contrast(1.15)";
+            ctx.drawImage(results.image, 0, 0, width, height);
+            ctx.restore();
+
+            // Cosmic Domain Fields Simulation Layer
             if (domainActive && activeClass === 'infinity') {
-                ctx.fillStyle = "rgba(4, 2, 18, 0.65)";
-                ctx.fillRect(0, 0, width, height);
-                
-                // Cosmic Domain Stars Renderer
-                ctx.fillStyle = "#fff";
-                for (let i = 0; i < 20; i++) {
+                ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+                for (let i = 0; i < 15; i++) {
                     ctx.beginPath();
                     ctx.arc(Math.random() * width, Math.random() * height, Math.random() * 2, 0, Math.PI * 2);
                     ctx.fill();
                 }
             }
 
-            // A. GOJO ENERGY RENDER PROCESSOR
-            if (activeClass === 'infinity') {
-                if (isPressing) {
-                    // Left Side / Right Side dynamic split handling
-                    if (mouseX < width / 2) {
-                        document.getElementById('active-catalyst').innerText = "Lapse: BLUE";
-                        ctx.beginPath();
-                        let g = ctx.createRadialGradient(mouseX, mouseY, 2, mouseX, mouseY, 35);
-                        g.addColorStop(0, '#fff');
-                        g.addColorStop(0.4, 'var(--neon-blue)');
-                        g.addColorStop(1, 'transparent');
-                        ctx.fillStyle = g;
-                        ctx.arc(mouseX, mouseY, 35, 0, Math.PI * 2);
-                        ctx.fill();
-                        if (Math.random() > 0.2) addParticle(mouseX, mouseY, 'var(--neon-blue)');
-                    } else {
-                        document.getElementById('active-catalyst').innerText = "Reversal: RED";
-                        ctx.beginPath();
-                        let g = ctx.createRadialGradient(mouseX, mouseY, 2, mouseX, mouseY, 35);
-                        g.addColorStop(0, '#fff');
-                        g.addColorStop(0.4, 'var(--neon-red)');
-                        g.addColorStop(1, 'transparent');
-                        ctx.fillStyle = g;
-                        ctx.arc(mouseX, mouseY, 35, 0, Math.PI * 2);
-                        ctx.fill();
-                        if (Math.random() > 0.2) addParticle(mouseX, mouseY, 'var(--neon-red)');
-                    }
-                }
+            let totalHands = results.multiHandLandmarks ? results.multiHandLandmarks.length : 0;
+            document.getElementById('hud-hands').innerText = `${totalHands}/2 Active`;
 
-            // B. DOCTOR STRANGE MYSTIC ARTS ENGINE
-            } else if (activeClass === 'mystic') {
-                ctx.save();
-                ctx.translate(mouseX, mouseY);
-                ctx.rotate(performance.now() * 0.002);
-                ctx.strokeStyle = 'var(--mystic-gold)';
-                ctx.lineWidth = 2.5;
-                ctx.shadowBlur = 15;
-                ctx.shadowColor = 'var(--mystic-gold)';
+            if (totalHands > 0) {
+                // Read Hand Attributes
+                let primaryHand = results.multiHandLandmarks[0];
+                let thumbTip = primaryHand[4];
+                let indexTip = primaryHand[8];
+                let pinkyTip = primaryHand[20];
                 
-                // Geometry Mandala Trace
-                ctx.beginPath();
-                ctx.arc(0, 0, 60, 0, Math.PI * 2);
-                ctx.stroke();
-                
-                ctx.beginPath();
-                for (let i = 0; i < 6; i++) {
-                    let r = (Math.PI / 3) * i;
-                    ctx.lineTo(Math.cos(r) * 60, Math.sin(r) * 60);
-                }
-                ctx.closePath();
-                ctx.stroke();
-                ctx.restore();
-                
-                if (Math.random() > 0.3) addParticle(mouseX, mouseY, 'var(--mystic-gold)');
+                // Real-time geometric calculation functions
+                let spreadDist = Math.hypot(thumbTip.x - pinkyTip.x, thumbTip.y - pinkyTip.y);
+                let spreadPercent = Math.min(Math.round(spreadDist * 250), 100);
+                document.getElementById('hud-spread').innerText = spreadPercent + "%";
+
+                // Map landmarks coordinates structure loops
+                results.multiHandLandmarks.forEach((landmarks, index) => {
+                    let handLabel = results.multiHandedness[index].label; // Left or Right evaluation
+                    
+                    // Spatial Conversion (Factoring Canvas Size Dimensions)
+                    let hx = (1 - landmarks[8].x) * width;
+                    let hy = landmarks[8].y * height;
+                    let wristX = (1 - landmarks[0].x) * width;
+                    let wristY = landmarks[0].y * height;
+
+                    let pinchDist = Math.hypot(landmarks[4].x - landmarks[8].x, landmarks[4].y - landmarks[8].y);
+                    let isPinching = pinchDist < 0.05;
+
+                    // ----------------------------------------
+                    // PIPELINE 1: LIMITLESS (GOJO) VISUAL EFFECTS
+                    // ----------------------------------------
+                    if (activeClass === 'infinity') {
+                        
+                        // Domain Expansion Trigger Condition: (Spread over 80% and elevated hands position)
+                        if (totalHands === 2 && spreadPercent > 80 && landmarks[8].y < 0.35) {
+                            domainActive = true;
+                            document.getElementById('reality-state').innerText = "UNLIMITED VOID";
+                            document.getElementById('reality-state').style.color = 'var(--neon-purple)';
+                        } else if (totalHands === 0 || spreadPercent < 20) {
+                            domainActive = false;
+                            document.getElementById('reality-state').innerText = "Standard Space";
+                            document.getElementById('reality-state').style.color = 'var(--mystic-gold)';
+                        }
+
+                        if (isPinching) {
+                            if (handLabel === 'Left') {
+                                document.getElementById('active-catalyst').innerText = "Lapse: BLUE";
+                                blueOrb = { x: hx, y: hy, r: 28 + Math.sin(performance.now()*0.02)*6 };
+                                if (Math.random() > 0.3) addParticle(hx, hy, 'var(--neon-blue)');
+                            } else {
+                                document.getElementById('active-catalyst').innerText = "Reversal: RED";
+                                redOrb = { x: hx, y: hy, r: 24 + Math.sin(performance.now()*0.03)*4 };
+                                if (Math.random() > 0.3) addParticle(hx, hy, 'var(--neon-red)');
+                            }
+                        } else {
+                            if (handLabel === 'Left') blueOrb = null;
+                            if (handLabel === 'Right') redOrb = null;
+                        }
+
+                        // HOLLOW PURPLE FUSION CALCULATOR MECHANISM
+                        if (totalHands === 2 && blueOrb && redOrb) {
+                            let distanceBetweenOrbs = Math.hypot(blueOrb.x - redOrb.x, blueOrb.y - redOrb.y);
+                            if (distanceBetweenOrbs < 140) {
+                                document.getElementById('active-catalyst').innerText = "HOLLOW PURPLE";
+                                let midX = (blueOrb.x + redOrb.x) / 2;
+                                let midY = (blueOrb.y + redOrb.y) / 2;
+                                purpleOrb = { x: midX, y: midY, r: 60 + Math.sin(performance.now()*0.05)*10 };
+                                
+                                for(let m=0; m<4; m++) {
+                                    addParticle(midX, midY, 'var(--neon-purple)');
+                                }
+                                blueOrb = null; redOrb = null;
+                            } else { purpleOrb = null; }
+                        } else { purpleOrb = null; }
+
+                        // Triggering Orbs Processing Loops
+                        if(blueOrb) {
+                            ctx.beginPath(); ctx.arc(blueOrb.x, blueOrb.y, blueOrb.r, 0, Math.PI*2);
+                            ctx.fillStyle = 'var(--neon-blue)'; ctx.shadowBlur = 30; ctx.shadowColor = 'var(--neon-blue)';
+                            ctx.fill(); ctx.shadowBlur = 0;
+                        }
+                        if(redOrb) {
+                            ctx.beginPath(); ctx.arc(redOrb.x, redOrb.y, redOrb.r, 0, Math.PI*2);
+                            ctx.fillStyle = 'var(--neon-red)'; ctx.shadowBlur = 30; ctx.shadowColor = 'var(--neon-red)';
+                            ctx.fill(); ctx.shadowBlur = 0;
+                        }
+                        if(purpleOrb) {
+                            ctx.beginPath(); ctx.arc(purpleOrb.x, purpleOrb.y, purpleOrb.r, 0, Math.PI*2);
+                            ctx.fillStyle = 'var(--neon-purple)'; ctx.shadowBlur = 55; ctx.shadowColor = 'var(--neon-purple)';
+                            ctx.fill(); ctx.shadowBlur = 0;
+                        }
+
+                        // Render Structural Wireframe Skeleton lines
+                        ctx.beginPath();
+                        ctx.strokeStyle = domainActive ? 'var(--neon-purple)' : 'rgba(255,255,255,0.35)';
+                        ctx.lineWidth = 2.5;
+                        for(let i=0; i<landmarks.length; i++) {
+                            let mx = (1 - landmarks[i].x) * width;
+                            let my = landmarks[i].y * height;
+                            if(i > 0 && i % 4 !== 1) {
+                                ctx.moveTo((1 - landmarks[i-1].x) * width, landmarks[i-1].y * height);
+                                ctx.lineTo(mx, my);
+                            }
+                        }
+                        ctx.stroke();
+
+                    // ----------------------------------------
+                    // PIPELINE 2: MYSTIC ARTS (STRANGE) VISUAL EFFECTS
+                    // ----------------------------------------
+                    } else if (activeClass === 'mystic') {
+                        document.getElementById('active-catalyst').innerText = "Eldritch Shield";
+                        
+                        ctx.save();
+                        ctx.translate(wristX, wristY);
+                        ctx.rotate(performance.now() * 0.002);
+                        ctx.strokeStyle = 'var(--mystic-gold)';
+                        ctx.lineWidth = 2.5;
+                        ctx.shadowBlur = 20; ctx.shadowColor = 'var(--mystic-gold)';
+                        
+                        // Geometric Sacred Mandala Array Generator
+                        ctx.beginPath(); ctx.arc(0, 0, 65, 0, Math.PI * 2); ctx.stroke();
+                        ctx.beginPath();
+                        for (let i = 0; i < 6; i++) {
+                            let r = (Math.PI / 3) * i;
+                            ctx.lineTo(Math.cos(r) * 65, Math.sin(r) * 65);
+                        }
+                        ctx.closePath(); ctx.stroke();
+                        ctx.restore(); ctx.shadowBlur = 0;
+
+                        if (Math.random() > 0.4) addParticle(hx, hy, 'var(--mystic-gold)');
+                    }
+                });
+
+            } else {
+                blueOrb = null; redOrb = null; purpleOrb = null;
+                document.getElementById('active-catalyst').innerText = "Searching Identity";
             }
 
-            // Continuous processing for independent particles
+            // Independent Vector Particles Renderer Processor
             for (let i = particles.length - 1; i >= 0; i--) {
                 let p = particles[i];
-                p.x += p.vx;
-                p.y += p.vy;
+                p.x += p.vx; p.y += p.vy;
                 p.alpha -= 0.03;
                 if (p.alpha <= 0) {
                     particles.splice(i, 1);
                 } else {
                     ctx.save();
                     ctx.globalAlpha = p.alpha;
-                    ctx.beginPath();
-                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                    ctx.fillStyle = p.color;
-                    ctx.fill();
+                    ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.fillStyle = p.color; ctx.fill();
                     ctx.restore();
                 }
             }
+        }
 
-            requestAnimationFrame(animationLoop);
+        // ENGINE INGESTION AND LAUNCH PIPELINE
+        function startTrackingEngine() {
+            const hands = new Hands({
+                locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+            });
+
+            hands.setOptions({
+                maxNumHands: 2,
+                modelComplexity: 1,
+                minDetectionConfidence: 0.55,
+                minTrackingConfidence: 0.55
+            });
+
+            hands.onResults(onResults);
+
+            const camera = new Camera(video, {
+                onFrame: async () => {
+                    await hands.send({ image: video });
+                },
+                width: 1280,
+                height: 720
+            });
+            camera.start();
         }
     </script>
 </body>
