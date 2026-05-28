@@ -3,85 +3,172 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cinematic Hands AR - Direct Sandboxed Edition</title>
+    <title>Gojo Satoru - Limitless Matrix AR</title>
     
-    <!-- Ultra-Compatible Safe Tracking CDN (Bina Server ke chalne ke liye) -->
+    <!-- Direct Local Safe Tracker (Bypasses all server blocks) -->
     <script src="https://cdn.jsdelivr.net/ghost/tracking.js/build/tracking-min.js"></script>
     
     <style>
         :root {
-            --bg-dark: #020208;
-            --neon-blue: #00d2ff;
-            --neon-red: #ff0055;
-            --neon-purple: #ba00ff;
-            --mystic-gold: #ffaa00;
-            --panel-glass: rgba(6, 8, 20, 0.85);
-            --border-glass: rgba(255, 255, 255, 0.08);
+            --bg-void: #010105;
+            --gojo-blue: #0099ff;
+            --gojo-red: #ff0044;
+            --gojo-purple: #9900ff;
+            --panel-glass: rgba(10, 10, 25, 0.85);
+            --border-glass: rgba(255, 255, 255, 0.07);
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
-        body { font-family: 'Segoe UI', Roboto, sans-serif; background-color: var(--bg-dark); color: #fff; overflow: hidden; width: 100vw; height: 100vh; }
-        #cinematic-viewport { position: relative; width: 100%; height: 100%; }
-        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-void);
+            color: #fff;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #viewport-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
         #webcam {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
             object-fit: cover; transform: scaleX(-1); z-index: 1;
         }
 
-        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 2; pointer-events: none; }
+        canvas {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            object-fit: cover; z-index: 2;
+            pointer-events: none;
+        }
 
-        /* Tactical HUD Overlays */
-        .hud-container { position: absolute; top: 25px; left: 25px; z-index: 10; display: flex; flex-direction: column; gap: 16px; pointer-events: none; }
-        .glass-module { background: var(--panel-glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--border-glass); border-radius: 14px; padding: 20px 26px; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6); min-width: 280px; }
-        .module-header { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 3px; color: rgba(255, 255, 255, 0.35); margin-bottom: 12px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
-        .module-header::before { content: ''; display: inline-block; width: 6px; height: 6px; background: var(--neon-blue); border-radius: 50%; }
-        .hud-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 0.85rem; letter-spacing: 1px; text-transform: uppercase; }
-        .hud-row:last-child { margin-bottom: 0; }
-        .hud-row .label { color: rgba(255, 255, 255, 0.6); }
-        .hud-row .value { font-weight: 700; color: #fff; }
+        /* Six Eyes Tactical HUD */
+        .six-eyes-hud {
+            position: absolute;
+            top: 25px;
+            left: 25px;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            pointer-events: none;
+        }
 
-        #sorcery-selector { position: absolute; bottom: 35px; left: 50%; transform: translateX(-50%); z-index: 10; display: flex; gap: 14px; padding: 10px; border-radius: 50px; pointer-events: auto; }
-        .btn-magic { background: transparent; border: 1px solid transparent; color: rgba(255, 255, 255, 0.5); padding: 12px 26px; border-radius: 30px; cursor: pointer; font-weight: 700; font-size: 0.8rem; transition: all 0.3s ease; letter-spacing: 2px; text-transform: uppercase; }
-        .btn-magic.selected { color: #fff; background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.2); text-shadow: 0 0 8px #fff; }
+        .hud-card {
+            background: var(--panel-glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-glass);
+            border-radius: 12px;
+            padding: 16px 22px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8);
+            min-width: 270px;
+        }
 
-        /* Entry Gateway Screen */
-        #gateway-screen { position: absolute; inset: 0; background: radial-gradient(circle at center, #070919 0%, #010103 100%); z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.5s ease; }
-        .core-title { font-size: 2.5rem; font-weight: 200; letter-spacing: 9px; margin-bottom: 8px; color: #ffffff; }
-        .gateway-btn { padding: 20px 56px; font-size: 0.9rem; font-weight: 800; color: #fff; background: linear-gradient(45deg, var(--neon-blue), var(--neon-purple)); border: none; border-radius: 50px; cursor: pointer; letter-spacing: 4px; text-transform: uppercase; box-shadow: 0 0 35px rgba(0, 210, 255, 0.3); }
+        .hud-title {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: rgba(255, 255, 255, 0.4);
+            margin-bottom: 8px;
+            font-weight: 800;
+        }
+
+        .hud-data {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .hud-data .label { color: rgba(255, 255, 255, 0.5); }
+        .hud-data .value { font-weight: 700; color: #fff; }
+
+        /* Gateway Screen Matrix */
+        #gateway-overlay {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at center, #0a0e29 0%, #020206 100%);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .void-title {
+            font-size: 2.8rem;
+            font-weight: 300;
+            letter-spacing: 14px;
+            margin-bottom: 5px;
+            color: #ffffff;
+            text-shadow: 0 0 40px rgba(0, 153, 255, 0.3);
+        }
+
+        .sync-btn {
+            padding: 18px 50px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #fff;
+            background: linear-gradient(45deg, var(--gojo-blue), var(--gojo-purple));
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            box-shadow: 0 5px 25px rgba(153, 0, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .sync-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 35px rgba(0, 153, 255, 0.5);
+        }
+
         .hidden { opacity: 0; pointer-events: none; }
     </style>
 </head>
 <body>
 
-    <div id="cinematic-viewport">
-        <!-- Gateway Launcher -->
-        <div id="gateway-screen">
-            <h1 class="core-title">CINEMATIC HANDS</h1>
-            <p style="color: #4a4d6b; margin-bottom: 45px; font-size: 0.85rem; letter-spacing: 2px; text-transform: uppercase;">Direct File Local Sync Active</p>
-            <button class="gateway-btn" id="bootBtn">Synchronize Core</button>
+    <div id="viewport-container">
+        <!-- Direct Sync Interface -->
+        <div id="gateway-overlay">
+            <h1 class="void-title">LIMITLESS</h1>
+            <p style="color: #434770; margin-bottom: 40px; font-size: 0.8rem; letter-spacing: 4px; text-transform: uppercase;">Satoru Gojo Cursed Technique Engine</p>
+            <button class="sync-btn" id="syncBtn">Initialize Core</button>
         </div>
 
         <video id="webcam" autoplay playsinline></video>
         <canvas id="renderCanvas"></canvas>
 
-        <!-- Real-Time Diagnostics HUD -->
-        <div class="hud-container">
-            <div class="glass-module">
-                <div class="module-header">Engine Metrics</div>
-                <div class="hud-row"><span class="label">System Core</span><span class="value" style="color: var(--neon-blue);">Local Bypass</span></div>
-                <div class="hud-row"><span class="label">Tracker API</span><span class="value" style="color: #00ffaa;">ACTIVE</span></div>
+        <!-- Tactical Six Eyes Diagnostics -->
+        <div class="six-eyes-hud">
+            <div class="hud-card">
+                <div class="hud-title">User Profile</div>
+                <div class="hud-data"><span class="label">Sorcerer</span><span class="value" style="color: var(--gojo-blue); text-shadow: 0 0 5px var(--gojo-blue);">Satoru Gojo</span></div>
             </div>
-            <div class="glass-module">
-                <div class="module-header">Sorcery Matrix</div>
-                <div class="hud-row"><span class="label">Reality State</span><span class="value" id="reality-state" style="color: var(--mystic-gold);">Standard Space</span></div>
-                <div class="hud-row"><span class="label">Active Sub-Core</span><span class="value" id="active-catalyst">Awaiting Data</span></div>
+            <div class="hud-card">
+                <div class="hud-title">Active Catalyst Core</div>
+                <div class="hud-data"><span class="label">Technique</span><span class="value" id="active-technique" style="font-weight: 800;">Awaiting Input...</span></div>
             </div>
-        </div>
-
-        <div id="sorcery-selector" class="glass-module">
-            <button class="btn-magic selected" data-class="infinity">LIMITLESS (GOJO)</button>
-            <button class="btn-magic" data-class="mystic">MYSTIC ARTS (STRANGE)</button>
+            <div class="hud-card">
+                <div class="hud-title">Space Distortion Status</div>
+                <div class="hud-data"><span class="label">Infinity Vector</span><span class="value" id="infinity-status" style="color: #00ffaa;">STABLE</span></div>
+            </div>
         </div>
     </div>
 
@@ -91,173 +178,236 @@
         const ctx = canvas.getContext('2d');
         
         let width, height;
-        let activeClass = 'infinity';
         let particles = [];
-        let trackedX = 0, trackedY = 0, trackingActive = false;
-        let domainActive = false;
+        let trackedX = 0, trackedY = 0, isTracking = false;
+        let bypassPurpleTimer = 0;
 
-        function handleResize() {
+        function resizeViewport() {
             width = window.innerWidth;
             height = window.innerHeight;
             canvas.width = width;
             canvas.height = height;
         }
-        window.addEventListener('resize', handleResize);
-        handleResize();
+        window.addEventListener('resize', resizeViewport);
+        resizeViewport();
 
-        document.querySelectorAll('.btn-magic').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                document.querySelectorAll('.btn-magic').forEach(b => b.classList.remove('selected'));
-                e.target.classList.add('selected');
-                activeClass = e.target.getAttribute('data-class');
-            });
-        });
-
-        // 100% BYPASS CLICK FOR LOCAL RUN
-        document.getElementById('bootBtn').addEventListener('click', async () => {
+        // 100% SAFE LOCAL HARDWARE INITIALIZER
+        document.getElementById('syncBtn').addEventListener('click', async () => {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 1280, height: 720 } });
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { width: 1280, height: 720, facingMode: "user" } 
+                });
                 video.srcObject = stream;
                 
                 video.addEventListener("loadeddata", () => {
-                    document.getElementById('gateway-screen').classList.add('hidden');
-                    initLocalTracker();
+                    document.getElementById('gateway-overlay').classList.add('hidden');
+                    startLimitlessTracking();
                 });
             } catch (err) {
-                alert("Camera Access Required. Please allow popup permissions.");
+                alert("Camera Access Error: Please click allow when browser prompts for webcam permissions.");
                 console.error(err);
             }
         });
 
-        function addParticle(x, y, color) {
-            particles.push({
-                x, y,
-                vx: (Math.random() - 0.5) * 8,
-                vy: (Math.random() - 0.5) * 8 - 1,
-                alpha: 1,
-                size: Math.random() * 5 + 2,
-                color
-            });
+        // Advanced Kinetic Cursed Energy Particles
+        function createCursedParticle(x, y, type) {
+            let color, vx, vy, size;
+            
+            if (type === 'blue') {
+                // Inward Suction Physics
+                let angle = Math.random() * Math.PI * 2;
+                let distance = 50 + Math.random() * 40;
+                color = `rgba(0, 153, 255, ${0.6 + Math.random() * 0.4})`;
+                return {
+                    x: x + Math.cos(angle) * distance,
+                    y: y + Math.sin(angle) * distance,
+                    vx: -Math.cos(angle) * 3,
+                    vy: -Math.sin(angle) * 3,
+                    alpha: 1,
+                    size: Math.random() * 3 + 2,
+                    color,
+                    type
+                };
+            } else if (type === 'red') {
+                // Outward Explosion Physics
+                let angle = Math.random() * Math.PI * 2;
+                let speed = 2 + Math.random() * 4;
+                color = `rgba(255, 0, 68, ${0.7 + Math.random() * 0.3})`;
+                return {
+                    x: x, y: y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    alpha: 1,
+                    size: Math.random() * 4 + 2,
+                    color,
+                    type
+                };
+            } else if (type === 'purple') {
+                // Chaotic Singularity Physics
+                color = Math.random() > 0.4 ? '#9900ff' : '#df80ff';
+                return {
+                    x: x + (Math.random() - 0.5) * 20,
+                    y: y + (Math.random() - 0.5) * 20,
+                    vx: (Math.random() - 0.5) * 10,
+                    vy: (Math.random() - 0.5) * 10,
+                    alpha: 1,
+                    size: Math.random() * 6 + 3,
+                    color,
+                    type
+                };
+            }
         }
 
-        // Safe Local Color Tracker to instantly grab skin tones/hand movement without heavy scripts
-        function initLocalTracker() {
-            // Setup a light-pixel skin tracking vector color (Bypasses CORS entirely)
-            tracking.ColorTracker.registerColor('skinColor', function(r, g, b) {
-                return (r > 70 && g > 40 && b > 20 && (Math.max(r, g, b) - Math.min(r, g, b) > 15) && Math.abs(r - g) > 15 && r > g && r > b);
+        function startLimitlessTracking() {
+            // High-Speed Pixel Matrix Analyzer (Bypasses sandbox cross-origin limitations)
+            tracking.ColorTracker.registerColor('handSkin', function(r, g, b) {
+                return (r > 60 && g > 35 && b > 15 && (Math.max(r, g, b) - Math.min(r, g, b) > 12) && r > g && r > b);
             });
 
-            const tracker = new tracking.ColorTracker(['skinColor']);
-            tracker.setMinDimension(40);
+            const tracker = new tracking.ColorTracker(['handSkin']);
+            tracker.setMinDimension(45);
 
             tracker.on('track', function(event) {
                 if (event.data.length > 0) {
-                    trackingActive = true;
-                    // Mirroring the coordinate system calculation
-                    let rect = event.data[0];
-                    trackedX = width - (rect.x + rect.width / 2);
-                    trackedY = rect.y + rect.height / 2;
+                    isTracking = true;
+                    let targetBox = event.data[0];
+                    // Correctly map and mirror coordinates 
+                    trackedX = width - (targetBox.x + targetBox.width / 2);
+                    trackedY = targetBox.y + targetBox.height / 2;
                 } else {
-                    trackingActive = false;
+                    isTracking = false;
                 }
             });
 
             tracking.track('#webcam', tracker);
-            requestAnimationFrame(renderCoreLoop);
+            requestAnimationFrame(renderEngineLoop);
         }
 
-        // FULL ANIMATION GRAPHICS LAYER
-        function renderCoreLoop() {
+        function renderEngineLoop() {
+            // Draw clear frame canvas pipeline
             ctx.clearRect(0, 0, width, height);
 
-            if (domainActive && activeClass === 'infinity') {
-                ctx.fillStyle = "rgba(5, 3, 20, 0.75)";
-                ctx.fillRect(0, 0, width, height);
-                // Cosmic Domain Sparks
-                ctx.fillStyle = "#fff";
-                for (let i = 0; i < 10; i++) {
-                    ctx.beginPath();
-                    ctx.arc(Math.random() * width, Math.random() * height, Math.random() * 2, 0, Math.PI * 2);
-                    ctx.fill();
+            if (isTracking) {
+                let currentMode = 'blue';
+                
+                // 1. DYNAMIC ZONE ALLOCATION
+                // Screen ke Center zone mein aate hi Hollow Purple trigger hoga, Left pe Blue, Right pe Red.
+                if (trackedX > width * 0.4 && trackedX < width * 0.6) {
+                    currentMode = 'purple';
+                } else if (trackedX >= width * 0.6) {
+                    currentMode = 'red';
+                } else {
+                    currentMode = 'blue';
                 }
-            }
 
-            if (trackingActive) {
-                // ----------------------------------------
-                // GOJO SUB-CATEGORIES & RE-DESIGN COLORS
-                // ----------------------------------------
-                if (activeClass === 'infinity') {
+                // 2. RENDER THE PHENOMENON
+                if (currentMode === 'blue') {
+                    // LAPSE BLUE: Core Orb & Suction Layers
+                    document.getElementById('active-technique').innerText = "LAPSE: BLUE";
+                    document.getElementById('active-technique').style.color = 'var(--gojo-blue)';
                     
-                    // Trigger Domain Expansion if tracking position goes extreme high screen
-                    if (trackedY < height * 0.25) {
-                        domainActive = true;
-                        document.getElementById('reality-state').innerText = "UNLIMITED VOID";
-                        document.getElementById('reality-state').style.color = 'var(--neon-purple)';
-                    }
-
-                    if (trackedX < width / 2) {
-                        // 1. LAPSE BLUE (Realistic inward pulling neon particles)
-                        document.getElementById('active-catalyst').innerText = "LAPSE: BLUE";
-                        ctx.beginPath();
-                        let g = ctx.createRadialGradient(trackedX, trackedY, 1, trackedX, trackedY, 40);
-                        g.addColorStop(0, '#fff'); g.addColorStop(0.3, 'var(--neon-blue)'); g.addColorStop(1, 'transparent');
-                        ctx.fillStyle = g; ctx.arc(trackedX, trackedY, 40, 0, Math.PI * 2); ctx.fill();
-                        
-                        if (Math.random() > 0.1) addParticle(trackedX + (Math.random()-0.5)*60, trackedY + (Math.random()-0.5)*60, 'var(--neon-blue)');
-                    } else {
-                        // 2. REVERSAL RED (Realistic exploding outward crimson sparks)
-                        document.getElementById('active-catalyst').innerText = "REVERSAL: RED";
-                        ctx.beginPath();
-                        let g = ctx.createRadialGradient(trackedX, trackedY, 1, trackedX, trackedY, 40);
-                        g.addColorStop(0, '#fff'); g.addColorStop(0.3, 'var(--neon-red)'); g.addColorStop(1, 'transparent');
-                        ctx.fillStyle = g; ctx.arc(trackedX, trackedY, 40, 0, Math.PI * 2); ctx.fill();
-                        
-                        if (Math.random() > 0.1) addParticle(trackedX, trackedY, 'var(--neon-red)');
-                    }
-
-                // ----------------------------------------
-                // DOCTOR STRANGE SPECIFIC METALLIC GOLD TECHNIQUES
-                // ----------------------------------------
-                } else if (activeClass === 'mystic') {
-                    document.getElementById('active-catalyst').innerText = "ELDRITCH MANDALA";
+                    let radialGrad = ctx.createRadialGradient(trackedX, trackedY, 2, trackedX, trackedY, 45);
+                    radialGrad.addColorStop(0, '#ffffff');
+                    radialGrad.addColorStop(0.2, '#00bfff');
+                    radialGrad.addColorStop(0.5, 'rgba(0, 153, 255, 0.4)');
+                    radialGrad.addColorStop(1, 'transparent');
                     
                     ctx.save();
-                    ctx.translate(trackedX, trackedY);
-                    ctx.rotate(performance.now() * 0.002);
-                    ctx.strokeStyle = 'var(--mystic-gold)';
-                    ctx.lineWidth = 3;
-                    ctx.shadowBlur = 20; ctx.shadowColor = 'var(--mystic-gold)';
-                    
-                    // Realistic Sacred Geometry lines Tracing
-                    ctx.beginPath(); ctx.arc(0, 0, 70, 0, Math.PI * 2); ctx.stroke();
-                    ctx.beginPath();
-                    for (let i = 0; i < 6; i++) {
-                        let r = (Math.PI / 3) * i;
-                        ctx.lineTo(Math.cos(r) * 70, Math.sin(r) * 70);
+                    ctx.shadowBlur = 25;
+                    ctx.shadowColor = 'var(--gojo-blue)';
+                    ctx.fillStyle = radialGrad;
+                    ctx.beginPath(); ctx.arc(trackedX, trackedY, 45, 0, Math.PI * 2); ctx.fill();
+                    ctx.restore();
+
+                    // Generate inward particles
+                    if (particles.length < 120) {
+                        particles.push(createCursedParticle(trackedX, trackedY, 'blue'));
+                        particles.push(createCursedParticle(trackedX, trackedY, 'blue'));
                     }
-                    ctx.closePath(); ctx.stroke();
-                    ctx.restore(); ctx.shadowBlur = 0;
+
+                } else if (currentMode === 'red') {
+                    // REVERSAL RED: Repulsion Core & Energy Embers
+                    document.getElementById('active-technique').innerText = "REVERSAL: RED";
+                    document.getElementById('active-technique').style.color = 'var(--gojo-red)';
+
+                    let radialGrad = ctx.createRadialGradient(trackedX, trackedY, 2, trackedX, trackedY, 40);
+                    radialGrad.addColorStop(0, '#ffffff');
+                    radialGrad.addColorStop(0.2, '#ff3366');
+                    radialGrad.addColorStop(0.6, 'rgba(255, 0, 64, 0.4)');
+                    radialGrad.addColorStop(1, 'transparent');
+
+                    ctx.save();
+                    ctx.shadowBlur = 25;
+                    ctx.shadowColor = 'var(--gojo-red)';
+                    ctx.fillStyle = radialGrad;
+                    ctx.beginPath(); ctx.arc(trackedX, trackedY, 40, 0, Math.PI * 2); ctx.fill();
+                    ctx.restore();
+
+                    // Generate outward exploding sparks
+                    particles.push(createCursedParticle(trackedX, trackedY, 'red'));
+
+                } else if (currentMode === 'purple') {
+                    // HOLLOW PURPLE: Singularity Explosion Plasma Ball
+                    document.getElementById('active-technique').innerText = "HOLLOW PURPLE";
+                    document.getElementById('active-technique').style.color = 'var(--gojo-purple)';
                     
-                    if (Math.random() > 0.2) addParticle(trackedX, trackedY, 'var(--mystic-gold)');
+                    // Complex Overlapping Pulsating Plasma Core
+                    let pulseSize = 65 + Math.sin(performance.now() * 0.04) * 8;
+                    let radialGrad = ctx.createRadialGradient(trackedX, trackedY, 5, trackedX, trackedY, pulseSize);
+                    radialGrad.addColorStop(0, '#ffffff');
+                    radialGrad.addColorStop(0.2, '#cc33ff');
+                    radialGrad.addColorStop(0.5, 'rgba(153, 0, 255, 0.6)');
+                    radialGrad.addColorStop(0.8, 'rgba(50, 0, 100, 0.3)');
+                    radialGrad.addColorStop(1, 'transparent');
+
+                    ctx.save();
+                    ctx.shadowBlur = 45;
+                    ctx.shadowColor = 'var(--gojo-purple)';
+                    ctx.fillStyle = radialGrad;
+                    ctx.beginPath(); ctx.arc(trackedX, trackedY, pulseSize, 0, Math.PI * 2); ctx.fill();
+                    ctx.restore();
+
+                    // Turbulent Unpredictable Purple Energy Stream
+                    for (let i = 0; i < 4; i++) {
+                        particles.push(createCursedParticle(trackedX, trackedY, 'purple'));
+                    }
                 }
             } else {
-                document.getElementById('active-catalyst').innerText = "Awaiting Hand Data";
+                document.getElementById('active-technique').innerText = "Awaiting Hand Vector...";
+                document.getElementById('active-technique').style.color = '#fff';
             }
 
-            // Vector Engine Process for Active Glow Sparks
+            // 3. PHYSICAL VECTOR CORE PROCESSING FOR PARTICLES
             for (let i = particles.length - 1; i >= 0; i--) {
                 let p = particles[i];
-                p.x += p.vx; p.y += p.vy; p.alpha -= 0.03;
+                p.x += p.vx;
+                p.y += p.vy;
+                
+                if (p.type === 'blue') {
+                    p.alpha -= 0.035; // Blue fades out as it hits the center core
+                } else {
+                    p.alpha -= 0.025; // Red and Purple travel outward and fade
+                }
+
                 if (p.alpha <= 0) {
                     particles.splice(i, 1);
                 } else {
-                    ctx.save(); ctx.globalAlpha = p.alpha;
-                    ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                    ctx.fillStyle = p.color; ctx.fill(); ctx.restore();
+                    ctx.save();
+                    ctx.globalAlpha = p.alpha;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.fillStyle = p.color;
+                    
+                    if (p.type === 'purple') {
+                        ctx.shadowBlur = p.size * 2;
+                        ctx.shadowColor = 'var(--gojo-purple)';
+                    }
+                    ctx.fill();
+                    ctx.restore();
                 }
             }
 
-            requestAnimationFrame(renderCoreLoop);
+            requestAnimationFrame(renderEngineLoop);
         }
     </script>
 </body>
