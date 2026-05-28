@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cinematic Hands AR - Sorcerer Supreme Core</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+    
+    <style>
+        :root {
+            --bg-dark: #020208;
+            --neon-blue: #00d2ff;
+            --neon-red: #ff0055;
+            --neon-purple: #ba00ff;
+            --mystic-gold: #ffaa00;
+            --panel-glass: rgba(6, 8, 20, 0.75);
+            --border-glass: rgba(255, 255, 255, 0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            outline: none;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-dark);
+            color: #fff;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #cinematic-viewport {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .raw-feed {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 2;
+        }
+
+        /* Tactical Cyber HUD Overlay */
+        .hud-container {
+            position: absolute;
+            top: 25px;
+            left: 25px;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            pointer-events: none;
+        }
+
+        .glass-module {
+            background: var(--panel-glass);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-glass);
+            border-radius: 14px;
+            padding: 20px 26px;
+            box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.6);
+            min-width: 280px;
+            transform: translateZ(0);
+        }
+
+        .module-header {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: rgba(255, 255, 255, 0.35);
+            margin-bottom: 12px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .module-header::before {
+            content: '';
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background: var(--neon-blue);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--neon-blue);
+        }
+
+        .hud-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .hud-row:last-child { margin-bottom: 0; }
+        .hud-row .label { color: rgba(255, 255, 255, 0.6); }
+        .hud-row .value {
+            font-weight: 700;
+            color: #fff;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+        }
+
+        .hud-row .value.active-glow {
+            color: var(--neon-blue);
+            text-shadow: 0 0 12px var(--neon-blue);
+        }
+
+        /* Sorcery Control Hub Floor */
+        #sorcery-selector {
+            position: absolute;
+            bottom: 35px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            display: flex;
+            gap: 14px;
+            padding: 10px;
+            border-radius: 50px;
+        }
+
+        .btn-magic {
+            background: transparent;
+            border: 1px solid transparent;
+            color: rgba(255, 255, 255, 0.6);
+            padding: 12px 26px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.8rem;
+            transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .btn-magic.selected {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.05);
+            text-shadow: 0 0 8px #fff;
+        }
+
+        /* Cinematic Terminal Gateway */
+        #gateway-screen {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at center, #070919 0%, #010103 100%);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.7s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        .core-title {
+            font-size: 2.2rem;
+            font-weight: 200;
+            letter-spacing: 9px;
+            margin-bottom: 8px;
+            background: linear-gradient(to right, #fff, rgba(255,255,255,0.4));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .gateway-btn {
+            padding: 20px 56px;
+            font-size: 0.9rem;
+            font-weight: 800;
+            color: #fff;
+            background: linear-gradient(45deg, var(--neon-blue), var(--neon-purple));
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            box-shadow: 0 0 35px rgba(0, 210, 255, 0.3);
+            transition: transform 0.3s standard, box-shadow 0.3s;
+        }
+
+        .gateway-btn:hover {
+            transform: scale(1.04);
+            box-shadow: 0 0 50px rgba(186, 0, 255, 0.5);
+        }
+
+        .hidden { opacity: 0; pointer-events: none; }
+    </style>
+</head>
+<body>
+
+    <div id="cinematic-viewport">
+        <div id="gateway-screen">
+            <h1 class="core-title">CINEMATIC HANDS</h1>
+            <p style="color: #4a4d6b; margin-bottom: 45px; font-size: 0.85rem; letter-spacing: 2px; text-transform: uppercase;">Quantum Reality Manipulation Framework</p>
+            <button class="gateway-btn" id="bootBtn">Synchronize Core</button>
+        </div>
+
+        <video class="raw-feed" autoplay playsinline></video>
+        <canvas id="renderCanvas"></canvas>
+
+        <div class="hud-container">
+            <div class="glass-module">
+                <div class="module-header">Engine Metrics</div>
+                <div class="hud-row"><span class="label">System Clock Rate</span><span class="value active-glow" id="fps-render">00 FPS</span></div>
+                <div class="hud-row"><span class="label">Spatial Hand Anchors</span><span class="value" id="anchors-count">0/2 Detected</span></div>
+            </div>
+            <div class="glass-module">
+                <div class="module-header">Cursed Energy Registry</div>
+                <div class="hud-row"><span class="label">Reality State</span><span class="value" id="reality-state" style="color: var(--mystic-gold);">Standard Space</span></div>
+                <div class="hud-row"><span class="label">Active Catalyst</span><span class="value" id="active-catalyst">None</span></div>
+                <div class="hud-row"><span class="label">Kinetic Velocity</span><span class="value" id="kinetic-velocity">0.00 Point/s</span></div>
+            </div>
+        </div>
+
+        <div id="sorcery-selector" class="glass-module">
+            <button class="btn-magic selected" data-class="infinity">LIMITLESS (GOJO)</button>
+            <button class="btn-magic" data-class="mystic">MYSTIC ARTS (STRANGE)</button>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * CINEMATIC HANDS ENGINE - CORE CONFIGURATION & PHYSICS
+         */
+        const video = document.querySelector('.raw-feed');
+        const canvas = document.getElementById('renderCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let width, height;
+        let frameCount = 0, fps = 0, lastFpsUpdate = performance.now();
+        let activeClass = 'infinity'; // infinity | mystic
+        let lastHandPoints = [null, null];
+        
+        // Complex Physics Pools
+        let particles = [];
+        let orbs = { blue: null, red: null, purple: null };
+        let domainState = { active: false, progress: 0, cosmicStars: [] };
+        let mandalas = [];
+
+        // Advanced Web Audio Nodes Struct
+        let audioContext, backgroundHum, dynamicGain, blastNode;
+
+        function resizeCanvas() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+            
+            // Re-generate Domain cosmic map coordinates
+            domainState.cosmicStars = [];
+            for(let i=0; i<150; i++) {
+                domainState.cosmicStars.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    r: Math.random() * 2 + 0.5,
+                    speed: Math.random() * 0.5 + 0.1
+                });
+            }
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Mode Switching Matrix Panel
+        document.querySelectorAll('.btn-magic').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.btn-magic').forEach(b => b.classList.remove('selected'));
+                e.target.classList.add('selected');
+                activeClass = e.target.getAttribute('data-class');
+                document.getElementById('active-catalyst').innerText = "Switched Matrix";
+            });
+        });
+
+        document.getElementById('bootBtn').addEventListener('click', () => {
+            document.getElementById('gateway-screen').classList.add('hidden');
+            initializeAudioCore();
+            initializeMediaPipePipeline();
+        });
+
+        /**
+         * SOUND WAVE SYNTHESIZER MODULE
+         */
+        function initializeAudioCore() {
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                backgroundHum = audioContext.createOscillator();
+                dynamicGain = audioContext.createGain();
+                
+                backgroundHum.type = 'sawtooth';
+                backgroundHum.frequency.setValueAtTime(60, audioContext.currentTime); // Cursed heavy frequency hum
+                dynamicGain.gain.setValueAtTime(0, audioContext.currentTime);
+                
+                // Lowpass filter to make it clean cinematic drone
+                let lowpass = audioContext.createBiquadFilter();
+                lowpass.type = 'lowpass';
+                lowpass.frequency.setValueAtTime(150, audioContext.currentTime);
+
+                backgroundHum.connect(lowpass);
+                lowpass.connect(dynamicGain);
+                dynamicGain.connect(audioContext.destination);
+                backgroundHum.start();
+            } catch(e) { console.warn("Audio Context init blocked."); }
+        }
+
+        function playFrequencyImpact(frequency, type, duration) {
+            if(!audioContext) return;
+            let osc = audioContext.createOscillator();
+            let gain = audioContext.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(frequency, audioContext.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(10, audioContext.currentTime + duration);
+            gain.gain.setValueAtTime(0.4, audioContext.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioContext.destination);
+            osc.start();
+            osc.stop(audioCtx ? audioContext.currentTime + duration : audioContext.currentTime + duration);
+        }
+
+        /**
+         * MATH UTILITIES & SPATIAL GEOMETRY LOGIC
+         */
+        function evaluateDistance(p1, p2) {
+            return Math.hypot(p1.x - p2.x, p1.y - p2.y);
+        }
+
+        function createCursedParticle(x, y, vx, vy, color, size, lifeStep = 0.02) {
+            particles.push({ x, y, vx, vy, alpha: 1, size, color, lifeStep });
+        }
+
+        /**
+         * MAIN PIPELINE RENDER ENGINE (CALLED ON CAPTURE FRAMES)
+         */
+        function executeRenderPipeline(results) {
+            // FPS Counter Logic
+            let now = performance.now();
+            frameCount++;
+            if (now >= lastFpsUpdate + 1000) {
+                fps = Math.round((frameCount * 1000) / (now - lastFpsUpdate));
+                document.getElementById('fps-render').innerText = fps + " FPS";
+                frameCount = 0;
+                lastFpsUpdate = now;
+            }
+
+            ctx.clearRect(0, 0, width, height);
+
+            // 1. MIRROR DIMENSION BACKGROUND RENDER
+            ctx.save();
+            ctx.translate(width, 0);
+            ctx.scale(-1, 1);
+            ctx.filter = "brightness(0.35) contrast(1.2) saturate(0.8)";
+            
+            // Domain Expansion background override
+            if (domainState.active) {
+                ctx.filter = "brightness(0.12) contrast(1.5) blur(2px)";
+            }
+            ctx.drawImage(results.image, 0, 0, width, height);
+            ctx.restore();
+
+            // 2. DOMAIN COSMIC FIELD LAYER (Gojo's Infinite Void Visual Grid)
+            if (domainState.active) {
+                document.getElementById('reality-state').innerText = "UNLIMITED VOID";
+                document.getElementById('reality-state').style.color = var(--neon-purple);
+                
+                ctx.fillStyle = "rgba(2, 2, 15, 0.4)";
+                ctx.fillRect(0,0, width, height);
+                
+                // Render spatial starry matrix strings
+                domainState.cosmicStars.forEach(star => {
+                    star.y -= star.speed * 2;
+                    if(star.y < 0) star.y = height;
+                    ctx.beginPath();
+                    ctx.arc(star.x, star.y, star.r * (1 + Math.sin(now*0.005)), 0, Math.PI*2);
+                    ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.7 + 0.3})`;
+                    ctx.fill();
+                });
+            } else {
+                document.getElementById('reality-state').innerText = "Standard Space";
+                document.getElementById('reality-state').style.color = var(--mystic-gold);
+            }
+
+            let handAnchorsCount = results.multiHandLandmarks ? results.multiHandLandmarks.length : 0;
+            document.getElementById('anchors-count').innerText = `${handAnchorsCount}/2 Tracked`;
+
+            if (handAnchorsCount > 0) {
+                if(dynamicGain) dynamicGain.gain.setTargetAtTime(0.08, audioContext.currentTime, 0.2);
+                
+                // Track spatial analytics of dominant hands
+                let handZero = results.multiHandLandmarks[0];
+                let labelZero = results.multiHandedness[0].label; // Left or Right handed check
+                
+                // Real-time Velocity evaluation tracking
+                let currentPos = handZero[8];
+                let velocity = 0;
+                if(lastHandPoints[0]) {
+                    velocity = evaluateDistance(currentPos, lastHandPoints[0]) * 800;
+                }
+                lastHandPoints[0] = currentPos;
+                document.getElementById('kinetic-velocity').innerText = velocity.toFixed(1) + " Point/s";
+
+                // Extract landmarks across all valid tracking profiles
+                results.multiHandLandmarks.forEach((landmarks, index) => {
+                    let handLabel = results.multiHandedness[index].label;
+                    
+                    // Spatial Conversion (Factoring mirror transform inversion matrix)
+                    let wristX = (1 - landmarks[0].x) * width;
+                    let wristY = landmarks[0].y * height;
+                    let indexX = (1 - landmarks[8].x) * width;
+                    let indexY = landmarks[8].y * height;
+                    let thumbX = (1 - landmarks[4].x) * width;
+                    let thumbY = landmarks[4].y * height;
+                    
+                    let thumbTip = landmarks[4];
+                    let indexTip = landmarks[8];
+                    let pinkyTip = landmarks[20];
+
+                    let pinchDist = evaluateDistance(thumbTip, indexTip);
+                    let isPinching = pinchDist < 0.045;
+                    let handSpread = evaluateDistance(thumbTip, pinkyTip) * 260;
+
+                    // -------------------------------------------------------------
+                    // ARCHETYPE PIPELINE 1: GOJO SATORU LIMITLESS MATRIX
+                    // -------------------------------------------------------------
+                    if (activeClass === 'infinity') {
+                        
+                        // DOMAIN EXPANSION TRIGGER LOGIC (Both hands vertical, widely spread)
+                        if (handAnchorsCount === 2 && handSpread > 80 && indexTip.y < 0.4) {
+                            if(!domainState.active) {
+                                domainState.active = true;
+                                playFrequencyImpact(40, 'triangle', 2.5);
+                            }
+                        } else if(handAnchorsCount === 0 || (handAnchorsCount === 1 && handSpread < 40)) {
+                            domainState.active = false;
+                        }
+
+                        // CONDITIONAL CHECKS FOR LAPSE BLUE AND REVERSAL RED
+                        if (isPinching) {
+                            let coreX = (thumbX + indexX) / 2;
+                            let coreY = (thumbY + indexY) / 2;
+
+                            if (handLabel === 'Left') {
+                                // BLUE VORTEX ENGINE INSTANTIATION
+                                document.getElementById('active-catalyst').innerText = "Lapse: BLUE";
+                                orbs.blue = { x: coreX, y: coreY, radius: 24 + Math.sin(now * 0.02) * 6 };
+                                
+                                // Gravitational pull calculation physics emulation particles
+                                for(let k=0; k<3; k++) {
+                                    let theta = Math.random() * Math.PI * 2;
+                                    let dist = 60 + Math.random() * 40;
+                                    let px = coreX + Math.cos(theta) * dist;
+                                    let py = coreY + Math.sin(theta) * dist;
+                                    createCursedParticle(px, py, -Math.cos(theta)*3, -Math.sin(theta)*3, var(--neon-blue), Math.random()*3+2, 0.04);
+                                }
+                            } else if (handLabel === 'Right') {
+                                // REVERSAL RED ENGINE INSTANTIATION
+                                document.getElementById('active-catalyst').innerText = "Reversal: RED";
+                                orbs.red = { x: coreX, y: coreY, radius: 20 + Math.sin(now * 0.03) * 4 };
+                                
+                                // Expulsion physics emulation particles outward
+                                if(Math.random() > 0.3) {
+                                    let theta = Math.random() * Math.PI * 2;
+                                    createCursedParticle(coreX, coreY, Math.cos(theta)*4, Math.sin(theta)*4, var(--neon-red), Math.random()*4+2, 0.03);
+                                }
+                            }
+                        } else {
+                            if (handLabel === 'Left') orbs.blue = null;
+                            if (handLabel === 'Right') orbs.red = null;
+                        }
+
+                        // ULTIMATE COMBINATION CONFIGURATION: HOLLOW PURPLE MATRIX
+                        if (handAnchorsCount === 2 && orbs.blue && orbs.red) {
+                            let gapBetweenOrbs = Math.hypot(orbs.blue.x - orbs.red.x, orbs.blue.y - orbs.red.y);
+                            
+                            if (gapBetweenOrbs < 160) {
+                                document.getElementById('active-catalyst').innerText = "HOLLOW PURPLE";
+                                let midPointX = (orbs.blue.x + orbs.red.x) / 2;
+                                let midPointY = (orbs.blue.y + orbs.red.y) / 2;
+                                
+                                orbs.purple = { x: midPointX, y: midPointY, radius: 50 + Math.sin(now*0.05)*12 };
+                                
+                                // Create destabilizing violent plasma particles loops
+                                for(let m=0; m<8; m++) {
+                                    let ang = Math.random() * Math.PI * 2;
+                                    let speed = 4 + Math.random()*6;
+                                    createCursedParticle(midPointX, midPointY, Math.cos(ang)*speed, Math.sin(ang)*speed, var(--neon-purple), Math.random()*6+4, 0.015);
+                                }
+                                
+                                // Screen Flash Shockwave injection
+                                if(Math.random() > 0.85) {
+                                    playFrequencyImpact(280, 'sawtooth', 0.4);
+                                    ctx.fillStyle = "rgba(186, 0, 255, 0.15)";
+                                    ctx.fillRect(0,0,width,height);
+                                }
+                                
+                                // Neutralize parent indicators inside calculations loop
+                                orbs.blue = null;
+                                orbs.red = null;
+                            } else { orbs.purple = null; }
+                        } else { orbs.purple = null; }
+
+                        // EXECUTE RENDERING FOR ACTIVE GOJO INSTANCES
+                        if(orbs.blue) {
+                            ctx.beginPath();
+                            let gradBlue = ctx.createRadialGradient(orbs.blue.x, orbs.blue.y, 2, orbs.blue.x, orbs.blue.y, orbs.blue.radius);
+                            gradBlue.addColorStop(0, '#fff');
+                            gradBlue.addColorStop(0.3, 'rgba(0, 180, 255, 0.8)');
+                            gradBlue.addColorStop(1, 'rgba(0, 50, 255, 0)');
+                            ctx.fillStyle = gradBlue;
+                            ctx.shadowBlur = 30;
+                            ctx.shadowColor = var(--neon-blue);
+                            ctx.arc(orbs.blue.x, orbs.blue.y, orbs.blue.radius, 0, Math.PI*2);
+                            ctx.fill();
+                            ctx.shadowBlur = 0;
+                        }
+                        if(orbs.red) {
+                            ctx.beginPath();
+                            let gradRed = ctx.createRadialGradient(orbs.red.x, orbs.red.y, 2, orbs.red.x, orbs.red.y, orbs.red.radius);
+                            gradRed.addColorStop(0, '#fff');
+                            gradRed.addColorStop(0.3, 'rgba(255, 0, 100, 0.9)');
+                            gradRed.addColorStop(1, 'rgba(150, 0, 30, 0)');
+                            ctx.fillStyle = gradRed;
+                            ctx.shadowBlur = 35;
+                            ctx.shadowColor = var(--neon-red);
+                            ctx.arc(orbs.red.x, orbs.red.y, orbs.red.radius, 0, Math.PI*2);
+                            ctx.fill();
+                            ctx.shadowBlur = 0;
+                        }
+                        if(orbs.purple) {
+                            ctx.beginPath();
+                            let gradPurp = ctx.createRadialGradient(orbs.purple.x, orbs.purple.y, 5, orbs.purple.x, orbs.purple.y, orbs.purple.radius);
+                            gradPurp.addColorStop(0, '#ffffff');
+                            gradPurp.addColorStop(0.4, 'rgba(186, 0, 255, 0.9)');
+                            gradPurp.addColorStop(0.8, 'rgba(70, 0, 150, 0.6)');
+                            gradPurp.addColorStop(1, 'rgba(0,0,0,0)');
+                            ctx.fillStyle = gradPurp;
+                            ctx.shadowBlur = 60;
+                            ctx.shadowColor = var(--neon-purple);
+                            ctx.arc(orbs.purple.x, orbs.purple.y, orbs.purple.radius, 0, Math.PI*2);
+                            ctx.fill();
+                            ctx.shadowBlur = 0;
+                        }
+
+                        // INTER-BONE CYBERNETIC DRAW PATHS
+                        ctx.beginPath();
+                        ctx.strokeStyle = domainState.active ? var(--neon-purple) : "rgba(255,255,255,0.25)";
+                        ctx.lineWidth = 2;
+                        for(let i=0; i<landmarks.length; i++) {
+                            let cx = (1 - landmarks[i].x) * width;
+                            let cy = landmarks[i].y * height;
+                            if(i > 0 && i % 4 !== 1) {
+                                let prevCx = (1 - landmarks[i-1].x) * width;
+                                let prevCy = landmarks[i-1].y * height;
+                                ctx.moveTo(prevCx, prevCy);
+                                ctx.lineTo(cx, cy);
+                            }
+                        }
+                        ctx.stroke();
+
+                    // -------------------------------------------------------------
+                    // ARCHETYPE PIPELINE 2: DOCTOR STRANGE MYSTIC ARTS
+                    // -------------------------------------------------------------
+                    } else if (activeClass === 'mystic') {
+                        document.getElementById('active-catalyst').innerText = isPinching ? "Spell Casting" : "Eldritch Shield";
+                        
+                        // ELDRITCH MANDALA DRAW CONFIGURATION
+                        let angleRotation = now * 0.0015 * (index + 1);
+                        ctx.save();
+                        ctx.translate(wristX, wristY);
+                        ctx.rotate(angleRotation);
+                        
+                        // Render complex runic circular lines boundaries
+                        ctx.strokeStyle = var(--mystic-gold);
+                        ctx.shadowBlur = 20;
+                        ctx.shadowColor = var(--mystic-gold);
+                        ctx.lineWidth = 2.5;
+                        
+                        // Outer Ring
+                        ctx.beginPath();
+                        ctx.arc(0, 0, 75, 0, Math.PI * 2);
+                        ctx.stroke();
+                        
+                        // Inner Layer Hexagram structure
+                        ctx.lineWidth = 1.5;
+                        ctx.beginPath();
+                        for (let m = 0; m < 6; m++) {
+                            let rad = (Math.PI / 3) * m;
+                            let nextRad = (Math.PI / 3) * (m + 2);
+                            ctx.moveTo(Math.cos(rad) * 75, Math.sin(rad) * 75);
+                            ctx.lineTo(Math.cos(nextRad) * 75, Math.sin(nextRad) * 75);
+                        }
+                        ctx.stroke();
+
+                        // Concentric internal tracking ring
+                        ctx.beginPath();
+                        ctx.arc(0, 0, 45, 0, Math.PI * 2);
+                        ctx.setLineDash([8, 6]);
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+                        
+                        ctx.restore();
+                        ctx.shadowBlur = 0;
+
+                        // Continuous generation of magical light trails at finger anchors
+                        const targetMagicFingers = [4, 8, 12, 16, 20];
+                        targetMagicFingers.forEach(fIdx => {
+                            let fx = (1 - landmarks[fIdx].x) * width;
+                            let fy = landmarks[fIdx].y * height;
+                            if(Math.random() > 0.45) {
+                                createCursedParticle(fx, fy, (Math.random()-0.5)*3, (Math.random()-0.5)*3, var(--mystic-gold), Math.random()*2.5+1.5, 0.025);
+                            }
+                        });
+                    }
+                });
+
+            } else {
+                if(dynamicGain) dynamicGain.gain.setTargetAtTime(0, audioContext.currentTime, 0.1);
+                lastHandPoints = [null, null];
+                document.getElementById('kinetic-velocity').innerText = "0.00 Point/s";
+                document.getElementById('anchors-count').innerText = "0/2 Detected";
+                document.getElementById('active-catalyst').innerText = "None";
+            }
+
+            // 3. ATOMIC PARTICLE SIMULATION PROCESSOR YIELD LOOP
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.alpha -= p.lifeStep;
+                
+                if (p.alpha <= 0) {
+                    particles.splice(i, 1);
+                } else {
+                    ctx.save();
+                    ctx.globalAlpha = p.alpha;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.fillStyle = p.color;
+                    
+                    // Standard light emission overlay processing
+                    if(p.color !== var(--mystic-gold)) {
+                        ctx.shadowBlur = p.size * 2;
+                        ctx.shadowColor = p.color;
+                    }
+                    ctx.fill();
+                    ctx.restore();
+                }
+            }
+        }
+
+        /**
+         * APPLICATION PIPELINE DEVICE INGESTION INITIALIZER
+         */
+        function initializeMediaPipePipeline() {
+            const handsPipeline = new Hands({
+                locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+            });
+
+            handsPipeline.setOptions({
+                maxNumHands: 2,
+                modelComplexity: 1,
+                minDetectionConfidence: 0.65,
+                minTrackingConfidence: 0.65
+            });
+
+            handsPipeline.onResults(executeRenderPipeline);
+
+            const captureDevice = new Camera(video, {
+                onFrame: async () => {
+                    await handsPipeline.send({ image: video });
+                },
+                width: 1280,
+                height: 720
+            });
+            captureDevice.start();
+        }
+    </script>
+</body>
+</html>
