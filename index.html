@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gojo Satoru - Limitless Engine: Full Body Awakening</title>
+    <title>Gojo Satoru - Limitless Engine: Destruction Physics</title>
     <script src="https://cdn.tailwindcss.com"></script>
     
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
@@ -30,13 +30,23 @@
         /* Screen Distortion / Infinite Void Reality Shaking */
         @keyframes realityQuake {
             0% { transform: translate(0, 0) scale(1); filter: blur(0px); }
-            20% { transform: translate(-6px, 5px) scale(1.02); filter: blur(2px) hue-rotate(25deg); }
-            40% { transform: translate(6px, -4px) scale(0.98); }
-            60% { transform: translate(-5px, -5px) scale(1.03); filter: blur(0px) hue-rotate(-20deg); }
-            80% { transform: translate(5px, 4px) scale(1.01); }
+            20% { transform: translate(-8px, 6px) scale(1.03); filter: blur(2px) hue-rotate(25deg); }
+            40% { transform: translate(8px, -5px) scale(0.97); }
+            60% { transform: translate(-6px, -6px) scale(1.04); filter: blur(0px) hue-rotate(-20deg); }
+            80% { transform: translate(6px, 5px) scale(1.02); }
             100% { transform: translate(0, 0) scale(1); filter: blur(0px); }
         }
         .quake-triggered { animation: realityQuake 0.08s linear infinite; }
+
+        /* HEAVY DAMAGE IMPACT FLASH */
+        @keyframes impactDamage {
+            0% { opacity: 0; transform: scale(1); box-shadow: inset 0 0 0 rgba(255,0,50,0); }
+            10% { opacity: 1; transform: scale(1.05); box-shadow: inset 0 0 150px rgba(255,0,50,0.8); background: rgba(255, 0, 50, 0.2); backdrop-filter: blur(5px); }
+            100% { opacity: 0; transform: scale(1); box-shadow: inset 0 0 0 rgba(255,0,50,0); background: transparent; backdrop-filter: blur(0px); }
+        }
+        .damage-flash-active {
+            animation: impactDamage 0.5s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
+        }
 
         /* UI Glitch Effects */
         .glitch-text {
@@ -61,18 +71,21 @@
     <audio id="audio-red-reversal" src="red_reversal.mp3"></audio>
     <audio id="audio-hollow-purple" src="hollow_purple.mp3"></audio>
     <audio id="audio-domain" src="domain_expansion.mp3"></audio>
+    <audio id="audio-damage-impact" src="damage.mp3"></audio>
 
     <video class="input_video hidden" autoplay playsinline></video>
     
     <canvas id="domain_canvas" class="absolute top-0 left-0 w-full h-full z-0 transition-opacity duration-1000 opacity-0"></canvas>
     <canvas id="output_canvas" class="absolute top-0 left-0 w-full h-full object-cover z-10 transition-all duration-300"></canvas>
 
+    <div id="damage-overlay" class="absolute inset-0 z-15 pointer-events-none opacity-0 mix-blend-screen"></div>
+
     <div class="absolute inset-0 z-20 pointer-events-none flex flex-col justify-between p-6">
         
         <div class="w-full flex justify-between items-start">
             <div class="bg-black/80 backdrop-blur-md p-5 border border-cyan-500/50 rounded-xl shadow-[0_0_40px_rgba(0,255,255,0.2)] w-80">
                 <h1 class="text-3xl font-black font-['Orbitron'] tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-500 drop-shadow-[0_0_15px_rgba(6,182,212,0.8)]">
-                    SIX EYES <span class="text-white text-sm align-top">v6.0</span>
+                    SIX EYES <span class="text-white text-sm align-top">v6.5</span>
                 </h1>
                 <div class="grid grid-cols-2 gap-x-2 gap-y-3 mt-5 text-[11px] font-['Rajdhani'] tracking-widest text-slate-300 uppercase">
                     <div>CE OUTPUT:</div> <div class="text-cyan-400 font-bold text-right text-sm animate-pulse">∞ (LIMITLESS)</div>
@@ -93,7 +106,7 @@
                     <span class="flex items-center gap-2 animate-pulse text-red-500"><div class="w-2 h-2 bg-red-500 rounded-full shadow-[0_0_10px_red]"></div> LIVE</span>
                 </div>
                 <div id="terminal-logs" class="text-[11px] font-mono text-slate-300 overflow-y-auto flex-grow space-y-1.5 pr-2">
-                    <p class="text-cyan-500">> Initiating Cursed Energy Core...</p>
+                    <p class="text-cyan-500">> Initiating Destruction Physics...</p>
                     <p class="text-slate-400">> Awaiting physical vessel connection.</p>
                 </div>
             </div>
@@ -108,7 +121,6 @@
         </div>
 
         <div class="w-full flex flex-col items-center gap-6">
-            
             <div class="text-center bg-black/70 backdrop-blur-2xl px-12 py-5 rounded-2xl border border-white/10 shadow-[0_10px_50px_rgba(0,0,0,0.9)]">
                 <div id="technique-title" class="text-4xl font-black font-['Orbitron'] text-slate-500 tracking-widest uppercase transition-all duration-300">
                     SYSTEM IDLE
@@ -119,7 +131,6 @@
             </div>
 
             <div class="w-full flex justify-between items-end pointer-events-auto px-4">
-                
                 <div class="flex gap-4">
                     <div class="bg-black/80 p-4 rounded-xl border border-blue-500/40 text-center min-w-[110px] shadow-[0_0_15px_rgba(0,0,255,0.2)]">
                         <p class="text-[10px] uppercase text-blue-400 font-bold tracking-widest">LAPSE: BLUE</p>
@@ -150,6 +161,7 @@
         const videoElement = document.querySelector('.input_video');
         const canvasElement = document.getElementById('output_canvas');
         const domainCanvas = document.getElementById('domain_canvas');
+        const damageOverlay = document.getElementById('damage-overlay');
         const canvasCtx = canvasElement.getContext('2d', { alpha: false });
         const domainCtx = domainCanvas.getContext('2d', { alpha: false });
         
@@ -162,11 +174,7 @@
             title: document.getElementById('technique-title'),
             desc: document.getElementById('technique-desc'),
             btn: document.getElementById('system-initializer-btn'),
-            metrics: {
-                blue: document.getElementById('metric-blue'),
-                red: document.getElementById('metric-red'),
-                purple: document.getElementById('metric-purple')
-            }
+            metrics: { blue: document.getElementById('metric-blue'), red: document.getElementById('metric-red'), purple: document.getElementById('metric-purple') }
         };
 
         const audio = {
@@ -175,10 +183,11 @@
             red: document.getElementById('audio-red-reversal'),
             purple: document.getElementById('audio-hollow-purple'),
             domain: document.getElementById('audio-domain'),
+            impact: document.getElementById('audio-damage-impact'),
             
             muteAllExcept(activeKey) {
                 Object.keys(this).forEach(key => {
-                    if (typeof this[key] !== 'function' && key !== activeKey && key !== 'ambient') {
+                    if (typeof this[key] !== 'function' && key !== activeKey && key !== 'ambient' && key !== 'impact') {
                         this[key].pause();
                         this[key].currentTime = 0;
                     }
@@ -191,7 +200,7 @@
 
         let engineState = "IDLE"; 
         let globalFps = 0, currentFrames = 0, lastTime = performance.now();
-        let redOrbRadius = 0; // For the new Red Style
+        let redOrbRadius = 0; 
         let redCoreRotation = 0;
 
         function resizeCanvases() {
@@ -232,35 +241,32 @@
         }
 
         /** ==========================================
-         * ULTIMATE PARTICLE PHYSICS ENGINE
+         * ULTIMATE DESTRUCTIVE PARTICLE SYSTEM
          * ========================================== */
         const particleSystem = [];
         
         class Particle {
-            constructor(x, y, type, customColor = null) {
+            constructor(x, y, type) {
                 this.pos = new Vector2D(x, y);
                 this.vel = new Vector2D((Math.random()-0.5)*3, (Math.random()-0.5)*3);
                 this.acc = new Vector2D(0, 0);
                 this.type = type; 
-                this.color = customColor;
+                this.rotation = Math.random() * Math.PI * 2;
+                this.rotSpeed = (Math.random() - 0.5) * 0.2;
                 
-                // Behavior Switcher based on Cursed Energy Type
                 switch(type) {
                     case 'full_body_aura':
-                        // Fluid aura flowing UP from all body parts
                         this.life = Math.random() * 60 + 40;
                         this.radius = Math.random() * 8 + 3;
-                        this.vel.y = -(Math.random() * 5 + 2); // Strong upward velocity
-                        this.vel.x = (Math.random() - 0.5) * 2; // Slight horizontal drift
+                        this.vel.y = -(Math.random() * 5 + 2);
+                        this.vel.x = (Math.random() - 0.5) * 2;
                         break;
                     case 'red_spark':
-                        // Violent sparks shooting off the Red Orb
                         this.life = Math.random() * 20 + 10;
                         this.radius = Math.random() * 3 + 1;
-                        this.vel.mult(6); // Fast explosion
+                        this.vel.mult(6);
                         break;
                     case 'blue_implosion':
-                        // Particles sucked into the center
                         this.life = Math.random() * 40 + 20;
                         this.radius = Math.random() * 4 + 1;
                         break;
@@ -269,10 +275,15 @@
                         this.radius = Math.random() * 6 + 2;
                         this.vel.mult(8);
                         break;
+                    // NEW: ENVIRONMENTAL DEBRIS / ROCKS
+                    case 'debris':
+                        this.life = Math.random() * 80 + 40;
+                        this.radius = Math.random() * 12 + 4; // Big rocks
+                        this.vel = new Vector2D((Math.random()-0.5)*25, (Math.random()-0.5)*25); // Explosive burst
+                        break;
                 }
                 this.maxLife = this.life;
                 this.alpha = 1;
-                // Unique noise offset for fluid simulation
                 this.noiseOffset = Math.random() * 1000;
             }
 
@@ -282,57 +293,108 @@
 
             update(target) {
                 if (this.type === 'full_body_aura') {
-                    // Fluid Mechanics: Add Perlin-like noise using Math.sin for natural aura weaving
                     this.vel.x += Math.sin(this.noiseOffset + currentFrames * 0.1) * 0.5;
-                    this.vel.y += -0.1; // Anti-gravity buoyancy
-                    this.vel.mult(0.95); // Air friction
+                    this.vel.y += -0.1; 
+                    this.vel.mult(0.95); 
                 } 
                 else if (this.type === 'blue_implosion' && target) {
-                    // Gravitational Pull (Negative Space)
                     let dir = new Vector2D(target.x - this.pos.x, target.y - this.pos.y);
                     let dist = dir.mag();
                     if (dist > 5) {
                         dir.normalize();
-                        let G = 15; // Gravitational constant
+                        let G = 15;
                         dir.mult(G / (dist * 0.1));
                         this.applyForce(dir);
                     }
                     this.vel.mult(0.9);
                 }
+                else if (this.type === 'debris') {
+                    // Gravity affecting the flying rocks
+                    this.vel.y += 0.8; // Heavy gravity pull downwards
+                    this.vel.mult(0.98); // Air friction
+                    this.rotation += this.rotSpeed;
+                }
 
                 this.vel.add(this.acc);
                 this.pos.add(this.vel);
-                this.acc.mult(0); // Reset acceleration
+                this.acc.mult(0);
                 this.life--;
-                this.alpha = Math.max(0, this.life / this.maxLife);
+                
+                // Fade out faster for non-debris
+                this.alpha = this.type === 'debris' ? Math.max(0, this.life / (this.maxLife*0.5)) : Math.max(0, this.life / this.maxLife);
             }
 
             draw(ctx) {
                 ctx.save();
                 ctx.globalAlpha = this.alpha;
-                ctx.beginPath();
-                ctx.arc(this.pos.x, this.pos.y, this.radius, 0, Math.PI * 2);
+                ctx.translate(this.pos.x, this.pos.y);
                 
-                if (this.type === 'full_body_aura') {
-                    ctx.fillStyle = `rgba(0, 200, 255, ${this.alpha * 0.7})`;
-                    ctx.shadowColor = '#00c8ff';
-                    ctx.shadowBlur = this.radius * 3;
-                } else if (this.type === 'red_spark') {
-                    ctx.fillStyle = `rgba(255, 20, 50, ${this.alpha})`;
-                    ctx.shadowColor = '#ff1432';
-                    ctx.shadowBlur = this.radius * 4;
-                } else if (this.type === 'blue_implosion') {
-                    ctx.fillStyle = `rgba(40, 70, 255, ${this.alpha})`;
-                    ctx.shadowColor = '#2846ff';
-                    ctx.shadowBlur = this.radius * 4;
-                } else if (this.type === 'purple_lightning') {
-                    ctx.fillStyle = `rgba(180, 40, 255, ${this.alpha})`;
-                    ctx.shadowColor = '#b428ff';
-                    ctx.shadowBlur = this.radius * 5;
+                if (this.type === 'debris') {
+                    // Draw rugged rocks
+                    ctx.rotate(this.rotation);
+                    ctx.beginPath();
+                    ctx.moveTo(0, -this.radius);
+                    ctx.lineTo(this.radius, -this.radius*0.5);
+                    ctx.lineTo(this.radius*0.8, this.radius);
+                    ctx.lineTo(-this.radius, this.radius*0.8);
+                    ctx.lineTo(-this.radius*0.5, -this.radius);
+                    ctx.closePath();
+                    
+                    ctx.fillStyle = `rgba(30, 30, 35, ${this.alpha})`;
+                    ctx.strokeStyle = `rgba(100, 100, 110, ${this.alpha})`;
+                    ctx.lineWidth = 1;
+                    ctx.shadowColor = '#000';
+                    ctx.shadowBlur = 10;
+                    ctx.fill();
+                    ctx.stroke();
+                } else {
+                    ctx.beginPath();
+                    ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+                    if (this.type === 'full_body_aura') {
+                        ctx.fillStyle = `rgba(0, 200, 255, ${this.alpha * 0.7})`;
+                        ctx.shadowColor = '#00c8ff';
+                        ctx.shadowBlur = this.radius * 3;
+                    } else if (this.type === 'red_spark') {
+                        ctx.fillStyle = `rgba(255, 20, 50, ${this.alpha})`;
+                        ctx.shadowColor = '#ff1432';
+                        ctx.shadowBlur = this.radius * 4;
+                    } else if (this.type === 'blue_implosion') {
+                        ctx.fillStyle = `rgba(40, 70, 255, ${this.alpha})`;
+                        ctx.shadowColor = '#2846ff';
+                        ctx.shadowBlur = this.radius * 4;
+                    } else if (this.type === 'purple_lightning') {
+                        ctx.fillStyle = `rgba(180, 40, 255, ${this.alpha})`;
+                        ctx.shadowColor = '#b428ff';
+                        ctx.shadowBlur = this.radius * 5;
+                    }
+                    ctx.fill();
                 }
                 
-                ctx.fill();
                 ctx.restore();
+            }
+        }
+
+        /** ==========================================
+         * DAMAGE IMPACT TRIGGER
+         * ========================================== */
+        function triggerDamageImpact(x, y) {
+            logTerminal("MASSIVE ENERGY DISCHARGE DETECTED!", "text-red-500 font-bold");
+            
+            // 1. Audio Bang
+            audio.impact.currentTime = 0;
+            audio.impact.volume = 0.8;
+            audio.impact.play().catch(()=>{});
+
+            // 2. Screen Flash & HUD Glitch
+            damageOverlay.classList.remove('damage-flash-active');
+            void damageOverlay.offsetWidth; // trigger reflow
+            damageOverlay.classList.add('damage-flash-active');
+            
+            // 3. Environmental Destruction (Spawn Rocks)
+            let spawnX = x || canvasElement.width/2;
+            let spawnY = y || canvasElement.height/2;
+            for(let i=0; i<60; i++) {
+                particleSystem.push(new Particle(spawnX, spawnY, 'debris'));
             }
         }
 
@@ -340,68 +402,38 @@
          * STRICT GESTURE RECOGNITION (RED OVERHAUL)
          * ========================================== */
         function analyzeGestureState(results) {
-            let state = "AURA_MANIFOLD"; // Base active state
-
+            let state = "AURA_MANIFOLD"; 
             const lHand = results.leftHandLandmarks;
             const rHand = results.rightHandLandmarks;
 
-            // --- SINGLE HAND LOGIC ---
             if ((lHand && !rHand) || (rHand && !lHand)) {
                 const hand = lHand || rHand;
-                
-                // Finger landmarks: 0=Wrist, 4=ThumbTip, 8=IndexTip, 12=MidTip, 16=RingTip, 20=PinkyTip
-                // PIP joints (lower knuckles): 6=IndexPip, 10=MidPip, 14=RingPip, 18=PinkyPip
                 const iTip = hand[8], iPip = hand[6];
                 const mTip = hand[12], mPip = hand[10];
                 const rTip = hand[16], rPip = hand[14];
                 const pTip = hand[20], pPip = hand[18];
                 const tTip = hand[4], tMcp = hand[2];
-
-                // 1. REVERSAL RED: STRICT SINGLE INDEX FINGER LOGIC
-                // Index MUST be straight (tip higher than pip in y-axis, assuming upright hand)
-                // Middle, Ring, Pinky MUST be folded (tip lower than pip)
-                // Thumb is usually curled inward
-                
-                // Calculate distance between tip and wrist to determine extension
                 let wrist = hand[0];
                 let indexDist = getDist(iTip, wrist);
                 let midDist = getDist(mTip, wrist);
                 let ringDist = getDist(rTip, wrist);
                 let pinkyDist = getDist(pTip, wrist);
 
-                // If index is fully extended while others are close to wrist/palm
+                // REVERSAL RED: SINGLE INDEX FINGER
                 let isIndexExtended = iTip.y < iPip.y && indexDist > 0.15;
                 let isMidFolded = mTip.y > mPip.y || midDist < 0.12;
                 let isRingFolded = rTip.y > rPip.y || ringDist < 0.12;
                 let isPinkyFolded = pTip.y > pPip.y || pinkyDist < 0.12;
 
-                if (isIndexExtended && isMidFolded && isRingFolded && isPinkyFolded) {
-                    return "RED";
-                }
+                if (isIndexExtended && isMidFolded && isRingFolded && isPinkyFolded) return "RED";
 
-                // 2. LAPSE BLUE: PINCH GESTURE
-                const pinchDist = getDist(iTip, tTip);
-                if (pinchDist < 0.04) {
-                    return "BLUE";
-                }
+                // LAPSE BLUE: PINCH GESTURE
+                if (getDist(iTip, tTip) < 0.04) return "BLUE";
             }
 
-            // --- DUAL HAND LOGIC ---
             if (lHand && rHand) {
-                const lWrist = lHand[0], rWrist = rHand[0];
-                const wristDist = getDist(lWrist, rWrist);
-
-                // DOMAIN EXPANSION: Wrists Crossed
-                if (wristDist < 0.1) {
-                    return "DOMAIN";
-                }
-
-                // HOLLOW PURPLE: Pointing / Aligning Hands
-                const lIndex = lHand[8], rIndex = rHand[8];
-                const indexDist = getDist(lIndex, rIndex);
-                if (indexDist < 0.12) {
-                    return "PURPLE";
-                }
+                if (getDist(lHand[0], rHand[0]) < 0.1) return "DOMAIN";
+                if (getDist(lHand[8], rHand[8]) < 0.12) return "PURPLE";
             }
 
             return state;
@@ -410,16 +442,13 @@
         /** ==========================================
          * SPECIAL EFFECTS RENDERERS
          * ========================================== */
-        
-        // Render New Red Style: Glowing Orb with Black Core
         function renderRedOrb(ctx, x, y) {
-            redOrbRadius = Math.min(redOrbRadius + 2, 40); // Grow to max size
+            redOrbRadius = Math.min(redOrbRadius + 2, 40); 
             redCoreRotation += 0.1;
 
             ctx.save();
             ctx.translate(x, y);
 
-            // Outer Glow
             ctx.beginPath();
             ctx.arc(0, 0, redOrbRadius * 2.5, 0, Math.PI * 2);
             let gradient = ctx.createRadialGradient(0, 0, redOrbRadius*0.5, 0, 0, redOrbRadius*2.5);
@@ -428,7 +457,6 @@
             ctx.fillStyle = gradient;
             ctx.fill();
 
-            // Inner Orb (Violent Red)
             ctx.beginPath();
             ctx.arc(0, 0, redOrbRadius, 0, Math.PI * 2);
             ctx.fillStyle = '#ff1432';
@@ -436,40 +464,32 @@
             ctx.shadowBlur = 40;
             ctx.fill();
 
-            // The Black Core (Negative Mass)
             ctx.rotate(redCoreRotation);
             ctx.beginPath();
             ctx.arc(0, 0, redOrbRadius * 0.4, 0, Math.PI * 2);
             ctx.fillStyle = '#000000';
             ctx.shadowBlur = 0;
             ctx.fill();
-
             ctx.restore();
 
-            // Emit violent sparks from the orb
-            for(let i=0; i<3; i++) {
-                particleSystem.push(new Particle(x, y, 'red_spark'));
-            }
+            for(let i=0; i<3; i++) particleSystem.push(new Particle(x, y, 'red_spark'));
         }
 
-        // Domain Expansion Background
         let starfield = Array.from({length: 300}, () => ({x: Math.random()*2000-1000, y: Math.random()*2000-1000, z: Math.random()*2000}));
         
         function renderInfiniteVoid() {
-            domainCtx.fillStyle = 'rgba(1, 1, 4, 1)'; // Deep dark blue void
+            domainCtx.fillStyle = 'rgba(1, 1, 4, 1)'; 
             domainCtx.fillRect(0, 0, domainCanvas.width, domainCanvas.height);
-            
             domainCtx.fillStyle = "rgba(255, 255, 255, 0.9)";
             let cx = domainCanvas.width/2, cy = domainCanvas.height/2;
 
             starfield.forEach(star => {
-                star.z -= 15; // Warp speed
+                star.z -= 15; 
                 if (star.z <= 0) {
                     star.z = 2000;
                     star.x = Math.random()*2000-1000;
                     star.y = Math.random()*2000-1000;
                 }
-                
                 let k = 400 / star.z;
                 let px = star.x * k + cx;
                 let py = star.y * k + cy;
@@ -483,10 +503,9 @@
         }
 
         /** ==========================================
-         * CORE RENDER LOOP (FRAME-BY-FRAME)
+         * CORE RENDER LOOP
          * ========================================== */
         function onHolisticResults(results) {
-            // FPS Counter Update
             currentFrames++;
             let now = performance.now();
             if (now - lastTime >= 1000) {
@@ -496,16 +515,12 @@
                 lastTime = now;
             }
 
-            // Prepare Canvas
             canvasCtx.save();
             canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-            
-            // Mirror Camera Feed
             canvasCtx.translate(canvasElement.width, 0);
             canvasCtx.scale(-1, 1);
             canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
 
-            // Update Telemetry UI
             if (results.poseLandmarks) {
                 ui.bodyStatus.innerText = "LINKED";
                 ui.bodyStatus.className = "text-green-400 font-bold text-right text-sm";
@@ -514,74 +529,47 @@
                 ui.bodyStatus.className = "text-red-500 font-bold text-right text-sm animate-pulse";
             }
 
-            // Determine Current Action State
             let newState = (results.poseLandmarks) ? analyzeGestureState(results) : "IDLE";
-            updateSystemState(newState);
+            updateSystemState(newState, results); // passing results for targeted damage
 
-            // ==========================================
-            // FULL BODY CURSED ENERGY AURA GENERATION
-            // ==========================================
+            // BODY AURA
             if (results.poseLandmarks && engineState !== "IDLE") {
-                // We emit aura from almost ALL major upper and lower body nodes
-                // Nodes: 11,12(Shoulders), 13,14(Elbows), 15,16(Wrists), 23,24(Hips), 25,26(Knees)
                 const emitNodes = [11, 12, 13, 14, 15, 16, 23, 24, 25, 26];
-                
                 emitNodes.forEach(idx => {
                     let node = results.poseLandmarks[idx];
-                    // Only emit if the body part is visible on camera
                     if (node && node.visibility > 0.5) {
-                        let px = node.x * canvasElement.width;
-                        let py = node.y * canvasElement.height;
-                        
-                        // High spawn rate for dense aura
-                        if (Math.random() > 0.3) { 
-                            particleSystem.push(new Particle(px, py, 'full_body_aura'));
-                        }
+                        if (Math.random() > 0.3) particleSystem.push(new Particle(node.x * canvasElement.width, node.y * canvasElement.height, 'full_body_aura'));
                     }
                 });
-
-                // Draw digital skeleton mapping for HUD effect
                 drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS, {color: 'rgba(0, 255, 255, 0.1)', lineWidth: 1});
             }
 
-            // ==========================================
-            // HAND GESTURE EFFECTS & TARGETING
-            // ==========================================
-            let actionTarget = null; // Where techniques are aimed
+            let actionTarget = null; 
 
             const processHand = (handLms) => {
                 let indexTip = { x: handLms[8].x * canvasElement.width, y: handLms[8].y * canvasElement.height };
                 actionTarget = indexTip;
-
-                // Draw Tech Grid over hands
                 drawConnectors(canvasCtx, handLms, HAND_CONNECTIONS, {color: 'rgba(0, 255, 255, 0.5)', lineWidth: 1});
                 
                 if (engineState === "BLUE") {
-                    // Massive implosion vacuum effect
                     for(let i=0; i<8; i++) {
                         let ang = Math.random() * Math.PI*2;
-                        let r = Math.random() * 250 + 100; // Spawn far away
+                        let r = Math.random() * 250 + 100; 
                         particleSystem.push(new Particle(indexTip.x + Math.cos(ang)*r, indexTip.y + Math.sin(ang)*r, 'blue_implosion'));
                     }
                 } 
                 else if (engineState === "RED") {
-                    // Render the new Custom Red Style precisely at the single index finger tip
                     renderRedOrb(canvasCtx, indexTip.x, indexTip.y);
                 } 
                 else if (engineState === "PURPLE") {
-                    // Reality tearing lightning
-                    for(let i=0; i<20; i++) {
-                        particleSystem.push(new Particle(indexTip.x + (Math.random()-0.5)*150, indexTip.y + (Math.random()-0.5)*150, 'purple_lightning'));
-                    }
+                    for(let i=0; i<20; i++) particleSystem.push(new Particle(indexTip.x + (Math.random()-0.5)*150, indexTip.y + (Math.random()-0.5)*150, 'purple_lightning'));
                 }
             };
 
             if (results.leftHandLandmarks) processHand(results.leftHandLandmarks);
             if (results.rightHandLandmarks) processHand(results.rightHandLandmarks);
 
-            // ==========================================
-            // PARTICLE PHYSICS UPDATE LOOP
-            // ==========================================
+            // UPDATE PARTICLES
             for (let i = particleSystem.length - 1; i >= 0; i--) {
                 let p = particleSystem[i];
                 p.update(actionTarget);
@@ -591,9 +579,6 @@
 
             canvasCtx.restore();
 
-            // ==========================================
-            // DOMAIN EXPANSION LAYER LOGIC
-            // ==========================================
             if (engineState === "DOMAIN") {
                 domainCanvas.classList.remove('opacity-0');
                 domainCanvas.classList.add('opacity-100');
@@ -607,21 +592,32 @@
         /** ==========================================
          * STATE MACHINE & UI CONTROLLER
          * ========================================== */
-        function updateSystemState(newState) {
+        function updateSystemState(newState, results) {
             if (engineState === newState) {
-                // UI Charging Logic
                 if(engineState === "BLUE") ui.metrics.blue.innerText = Math.min(100, parseFloat(ui.metrics.blue.innerText) + 2).toFixed(0) + "%";
                 if(engineState === "RED") ui.metrics.red.innerText = Math.min(100, parseFloat(ui.metrics.red.innerText) + 3).toFixed(0) + "%";
                 return;
             }
 
-            // Reset effects when switching states
+            // TRIGGER DESTRUCTION ON RED OR PURPLE ACTIVATION
+            if(newState === "RED" || newState === "PURPLE") {
+                // Find where to trigger explosion
+                let spawnX = canvasElement.width/2, spawnY = canvasElement.height/2;
+                if(results) {
+                    if (results.rightHandLandmarks) { spawnX = results.rightHandLandmarks[8].x * canvasElement.width; spawnY = results.rightHandLandmarks[8].y * canvasElement.height; }
+                    else if (results.leftHandLandmarks) { spawnX = results.leftHandLandmarks[8].x * canvasElement.width; spawnY = results.leftHandLandmarks[8].y * canvasElement.height; }
+                    
+                    // Note: Coordinates are flipped because canvas is mirrored, so we mirror the blast origin too
+                    spawnX = canvasElement.width - spawnX; 
+                }
+                triggerDamageImpact(spawnX, spawnY);
+            }
+
             if(engineState === "RED" && newState !== "RED") redOrbRadius = 0; 
             engineState = newState;
             
             document.body.classList.remove('quake-triggered');
             canvasElement.classList.remove('six-eyes-active');
-
             logTerminal(`Quantum signature shift: [${newState}] detected.`, "text-yellow-400 font-bold");
 
             switch (newState) {
@@ -632,7 +628,6 @@
                     ui.energyBar.style.width = "0%";
                     audio.muteAllExcept(null);
                     break;
-
                 case "AURA_MANIFOLD":
                     ui.title.innerText = "CURSED ENERGY: OVERFLOW";
                     ui.title.className = "text-4xl font-black font-['Orbitron'] text-cyan-400 tracking-widest uppercase drop-shadow-[0_0_15px_#22d3ee]";
@@ -641,7 +636,6 @@
                     ui.energyBar.className = "bg-gradient-to-r from-cyan-400 to-blue-500 h-full transition-all duration-300";
                     audio.muteAllExcept(null); 
                     break;
-
                 case "BLUE":
                     ui.title.innerText = "LAPSE: AMPLIFIED BLUE";
                     ui.title.className = "text-4xl font-black font-['Orbitron'] text-blue-500 tracking-widest uppercase drop-shadow-[0_0_20px_#2563eb] glitch-text";
@@ -650,17 +644,15 @@
                     ui.energyBar.className = "bg-blue-600 h-full transition-all duration-300 shadow-[0_0_20px_blue]";
                     audio.muteAllExcept('blue');
                     break;
-
                 case "RED":
                     ui.title.innerText = "REVERSAL: DIVERGENT RED";
                     ui.title.className = "text-4xl font-black font-['Orbitron'] text-red-500 tracking-widest uppercase drop-shadow-[0_0_30px_#ef4444]";
                     ui.desc.innerText = "Single index configuration locked. Absolute repulsion orb generating.";
                     ui.energyBar.style.width = "90%";
                     ui.energyBar.className = "bg-red-600 h-full transition-all duration-300 shadow-[0_0_20px_red]";
-                    document.body.classList.add('quake-triggered'); // Reality shakes due to red output
+                    document.body.classList.add('quake-triggered'); 
                     audio.muteAllExcept('red');
                     break;
-
                 case "PURPLE":
                     ui.title.innerText = "HOLLOW: IMAGINARY PURPLE";
                     ui.title.className = "text-5xl font-black font-['Orbitron'] text-purple-500 tracking-widest uppercase drop-shadow-[0_0_40px_#a855f7] animate-pulse";
@@ -671,14 +663,13 @@
                     document.body.classList.add('quake-triggered');
                     audio.muteAllExcept('purple');
                     break;
-
                 case "DOMAIN":
                     ui.title.innerText = "RYOIKI TENKAI: MURYOKUSHO";
                     ui.title.className = "text-5xl font-black font-['Orbitron'] text-transparent bg-clip-text bg-gradient-to-r from-white via-indigo-200 to-indigo-500 tracking-widest uppercase drop-shadow-[0_0_40px_rgba(255,255,255,0.9)]";
                     ui.desc.innerText = "Domain Expansion: Infinite Void. Absolute perception flood.";
                     ui.energyBar.style.width = "100%";
                     ui.energyBar.className = "bg-white h-full transition-all duration-300 shadow-[0_0_40px_white]";
-                    canvasElement.classList.add('six-eyes-active'); // Apply reality filter
+                    canvasElement.classList.add('six-eyes-active'); 
                     document.body.classList.add('quake-triggered');
                     audio.muteAllExcept('domain');
                     break;
@@ -686,14 +677,14 @@
         }
 
         /** ==========================================
-         * INITIALIZATION SEQUENCE (BOOTUP)
+         * INITIALIZATION SEQUENCE
          * ========================================== */
         const holisticEngine = new Holistic({
             locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}`
         });
 
         holisticEngine.setOptions({
-            modelComplexity: 1, // Balanced for FPS and Accuracy
+            modelComplexity: 1, 
             smoothLandmarks: true,
             enableSegmentation: false,
             smoothSegmentation: false,
@@ -708,7 +699,6 @@
             ui.btn.style.display = 'none'; 
             logTerminal("Booting Holistic AI Core...", "text-green-400");
             
-            // Start ambient audio
             audio.ambient.volume = 0.4;
             audio.ambient.play().catch(() => logTerminal("Audio blocked by browser policy.", "text-red-500"));
 
