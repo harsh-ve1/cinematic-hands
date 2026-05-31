@@ -222,6 +222,7 @@
       redOrbRadius: 0,
       redOrbSpin: 0,
       shockwave: 0,
+      infinityPulse: 0,
       lastBlastAt: 0,
       particles: [],
       starfield: [],
@@ -485,6 +486,25 @@
       const l = results.leftHandLandmarks;
       const r = results.rightHandLandmarks;
 
+      function isHandOpen(h) {
+        if (!h) return false;
+        const thumb = h[4].x < h[3].x;
+        const index = h[8].y < h[6].y;
+        const middle = h[12].y < h[10].y;
+        const ring = h[16].y < h[14].y;
+        const pinky = h[20].y < h[18].y;
+        return thumb && index && middle && ring && pinky;
+      }
+
+      if (l && r) {
+        const wristsClose = dist(l[0], r[0]) < 0.22;
+        const bothOpen = isHandOpen(l) && isHandOpen(r);
+        const palmsSpread = dist(l[8], r[8]) > 0.18;
+        if (bothOpen && wristsClose && palmsSpread) return 'INFINITY';
+        if (dist(l[0], r[0]) < 0.1) return 'DOMAIN';
+        if (dist(l[8], r[8]) < 0.12) return 'PURPLE';
+      }
+
       if ((l && !r) || (!l && r)) {
         const h = l || r;
         const iTip = h[8], iPip = h[6];
@@ -501,11 +521,6 @@
 
         if (isIndexExtended && isMidFolded && isRingFolded && isPinkyFolded) return 'RED';
         if (dist(iTip, tTip) < 0.04) return 'BLUE';
-      }
-
-      if (l && r) {
-        if (dist(l[0], r[0]) < 0.1) return 'DOMAIN';
-        if (dist(l[8], r[8]) < 0.12) return 'PURPLE';
       }
 
       return results.poseLandmarks ? 'AURA' : 'IDLE';
@@ -572,6 +587,18 @@
           audio.purple.volume = 0.9;
           audio.purple.play().catch(() => {});
           if (targetPoint) triggerDamageImpact(targetPoint.x, targetPoint.y, 'purple');
+          break;
+        case 'INFINITY':
+          ui.title.textContent = 'INFINITY: ACTIVE';
+          ui.title.className = 'card-title text-2xl md:text-5xl font-black text-cyan-300 uppercase tracking-[0.18em] drop-shadow-[0_0_28px_rgba(34,211,238,0.95)]';
+          ui.desc.textContent = 'Neutral infinity barrier. Hand gesture locked.';
+          ui.energy.style.width = '100%';
+          ui.blue.textContent = '∞';
+          ui.red.textContent = '∞';
+          ui.purple.textContent = '∞';
+          state.infinityPulse = 1;
+          audio.ambient.volume = 0.36;
+          audio.ambient.play().catch(() => {});
           break;
         case 'DOMAIN':
           ui.title.textContent = 'RYOIKI TENKAI';
@@ -640,11 +667,11 @@
         const nodes = [11, 12, 13, 14, 15, 16, 23, 24, 25, 26];
         for (const i of nodes) {
           const n = results.poseLandmarks[i];
-          if (n && n.visibility > 0.45 && Math.random() > 0.55) {
+          if (n && n.visibility > 0.45 && Math.random() > 0.42) {
             spawn(n.x * w, n.y * h, 'aura', 1);
           }
         }
-        drawConnectors(ctx, results.poseLandmarks, POSE_CONNECTIONS, { color: 'rgba(34, 211, 238, 0.14)', lineWidth: 1 });
+        drawConnectors(ctx, results.poseLandmarks, POSE_CONNECTIONS, { color: 'rgba(34, 211, 238, 0.18)', lineWidth: 1 });
       }
 
       let handPoint = null;
@@ -654,7 +681,7 @@
         handPoint = tip;
 
         if (state.mode === 'BLUE') {
-          spawn(tip.x, tip.y, 'blue', 10);
+          spawn(tip.x, tip.y, 'blue', 12);
         } else if (state.mode === 'RED') {
           drawRedOrb(ctx, tip.x, tip.y);
           state.charge.red = clamp(state.charge.red + 2.5, 0, 100);
@@ -665,8 +692,11 @@
             ui.red.textContent = '0%';
           }
         } else if (state.mode === 'PURPLE') {
-          spawn(tip.x, tip.y, 'purple', 8);
+          spawn(tip.x, tip.y, 'purple', 10);
           drawPurpleBurst(ctx, tip.x, tip.y);
+        } else if (state.mode === 'INFINITY') {
+          spawn(tip.x, tip.y, 'aura', 2);
+          drawInfinity(ctx, tip.x, tip.y, 1.25);
         }
       };
 
@@ -674,7 +704,24 @@
       if (results.rightHandLandmarks) processHand(results.rightHandLandmarks, 'right');
 
       if (results.poseLandmarks && state.mode !== 'IDLE') {
-        drawInfinity(ctx, w / 2, h / 2, state.mode === 'DOMAIN' ? 1.2 : 0.75);
+        drawInfinity(ctx, w / 2, h / 2, state.mode === 'DOMAIN' ? 1.2 : state.mode === 'INFINITY' ? 1.4 : 0.75);
+      }
+
+      if (state.mode === 'INFINITY') {
+        const pulse = 1 + Math.sin(performance.now() * 0.008) * 0.08;
+        ctx.save();
+        ctx.translate(w / 2, h / 2);
+        ctx.strokeStyle = 'rgba(34, 211, 238, 0.35)';
+        ctx.lineWidth = 2;
+        ctx.shadowColor = '#22d3ee';
+        ctx.shadowBlur = 24;
+        for (let i = 0; i < 3; i++) {
+          ctx.beginPath();
+          ctx.arc(0, 0, (110 + i * 22) * pulse, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+        ctx.restore();
+        spawn(w / 2, h / 2, 'aura', 2);
       }
 
       if (state.shockwave > 0.01) {
@@ -752,9 +799,13 @@
       }
 
       if (results.poseLandmarks) {
-        state.energy = clamp(state.energy + (state.mode === 'RED' ? 3 : state.mode === 'BLUE' ? 2 : state.mode === 'PURPLE' ? 4 : 1), 0, 100);
+        state.energy = clamp(state.energy + (state.mode === 'RED' ? 3 : state.mode === 'BLUE' ? 2 : state.mode === 'PURPLE' ? 4 : state.mode === 'INFINITY' ? 2.5 : 1), 0, 100);
       } else {
         state.energy = clamp(state.energy - 1.2, 0, 100);
+      }
+
+      if (state.mode === 'INFINITY') {
+        state.infinityPulse = Math.max(state.infinityPulse * 0.96, 0.08);
       }
 
       if (state.mode === 'DOMAIN') {
