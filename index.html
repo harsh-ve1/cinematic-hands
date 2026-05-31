@@ -218,10 +218,12 @@
       fpsLast: performance.now(),
       fps: 0,
       charge: { blue: 0, red: 0, purple: 0 },
+      combo: { blueReady: false, redReady: false, lastReadyAt: 0 },
       energy: 0,
       redOrbRadius: 0,
       redOrbSpin: 0,
       shockwave: 0,
+      bluePulse: 0,
       infinityPulse: 0,
       infinityHold: 0,
       voidHold: 0,
@@ -453,6 +455,61 @@
       c.restore();
     }
 
+    function drawBlueSingularity(c, x, y, scale = 1) {
+      c.save();
+      c.translate(x, y);
+      const pulse = 1 + Math.sin(performance.now() * 0.01) * 0.08;
+      const r = 18 * scale * pulse;
+
+      const outer = c.createRadialGradient(0, 0, 0, 0, 0, r * 8);
+      outer.addColorStop(0, 'rgba(255,255,255,0.15)');
+      outer.addColorStop(0.18, 'rgba(34,211,238,0.28)');
+      outer.addColorStop(0.45, 'rgba(59,130,246,0.18)');
+      outer.addColorStop(1, 'rgba(59,130,246,0)');
+      c.fillStyle = outer;
+      c.beginPath();
+      c.arc(0, 0, r * 8, 0, Math.PI * 2);
+      c.fill();
+
+      c.shadowColor = '#22d3ee';
+      c.shadowBlur = 26;
+      c.strokeStyle = 'rgba(34,211,238,0.9)';
+      c.lineWidth = 3;
+      c.beginPath();
+      c.arc(0, 0, r * 2.2, 0, Math.PI * 2);
+      c.stroke();
+
+      c.fillStyle = '#ffffff';
+      c.beginPath();
+      c.arc(0, 0, r * 0.45, 0, Math.PI * 2);
+      c.fill();
+      c.restore();
+    }
+
+    function triggerBlueMaximum(x, y) {
+      log('MAXIMUM OUTPUT BLUE — GRAVITY SINGULARITY!', 'text-blue-300 font-bold');
+      state.bluePulse = 1;
+      state.shockwave = 1;
+      state.combo.blueReady = true;
+      state.combo.lastReadyAt = performance.now();
+      audio.blue.currentTime = 0;
+      audio.blue.volume = 0.9;
+      audio.blue.play().catch(() => {});
+      audio.impact.currentTime = 0;
+      audio.impact.volume = 0.55;
+      audio.impact.play().catch(() => {});
+      spawn(x, y, 'blue', 28);
+      spawn(x, y, 'aura', 18);
+      spawn(x, y, 'debris', 28);
+      document.body.classList.add('quake-triggered');
+      setTimeout(() => document.body.classList.remove('quake-triggered'), 420);
+      if (state.combo.redReady) {
+        state.combo.blueReady = false;
+        state.combo.redReady = false;
+        triggerComboPurple(x, y);
+      }
+    }
+
     function drawVoidStep(c, x, y) {
       c.save();
       c.translate(x, y);
@@ -488,15 +545,44 @@
       setTimeout(() => document.body.classList.remove('quake-triggered'), 500);
     }
 
+    function triggerComboPurple(x, y) {
+      log('BLUE + RED COMBO — HOLLOW PURPLE AUTO-CREATED!', 'text-purple-300 font-bold');
+      state.charge.purple = 100;
+      ui.purple.textContent = 'ERASE';
+      ui.title.textContent = 'HOLLOW: PURPLE';
+      ui.title.className = 'card-title text-2xl md:text-5xl font-black text-purple-300 uppercase tracking-[0.18em] animate-pulse drop-shadow-[0_0_26px_rgba(168,85,247,0.95)]';
+      ui.desc.textContent = 'Auto-created by Blue + Red combo.';
+      ui.energy.style.width = '100%';
+      triggerDamageImpact(x, y, 'purple');
+      audio.purple.currentTime = 0;
+      audio.purple.volume = 0.95;
+      audio.purple.play().catch(() => {});
+      spawn(x, y, 'purple', 44);
+      spawn(x, y, 'debris', 96);
+      state.combo.blueReady = false;
+      state.combo.redReady = false;
+      state.charge.blue = 0;
+      state.charge.red = 0;
+      ui.blue.textContent = '0%';
+      ui.red.textContent = '0%';
+    }
+
     function triggerMaximumBlast(x, y) {
       log('MAXIMUM OUTPUT REACHED — BLAST RELEASED!', 'text-purple-300 font-bold');
       state.shockwave = 1;
+      state.combo.redReady = true;
+      state.combo.lastReadyAt = performance.now();
       triggerDamageImpact(x, y, 'purple');
       spawn(x, y, 'purple', 40);
       spawn(x, y, 'debris', 90);
       audio.purple.currentTime = 0;
       audio.purple.volume = 0.9;
       audio.purple.play().catch(() => {});
+      if (state.combo.blueReady) {
+        state.combo.blueReady = false;
+        state.combo.redReady = false;
+        triggerComboPurple(x, y);
+      }
     }
 
     function analyzeGesture(results) {
@@ -586,12 +672,12 @@
           audio.ambient.play().catch(() => {});
           break;
         case 'BLUE':
-          ui.title.textContent = 'LAPSE: BLUE';
-          ui.title.className = 'card-title text-2xl md:text-4xl font-black text-blue-400 uppercase tracking-[0.18em] glitch-text drop-shadow-[0_0_12px_rgba(59,130,246,0.8)]';
-          ui.desc.textContent = 'Convergence active. Gravity pull initiated.';
-          ui.energy.style.width = '70%';
+          ui.title.textContent = 'MAXIMUM OUTPUT: BLUE';
+          ui.title.className = 'card-title text-2xl md:text-5xl font-black text-blue-300 uppercase tracking-[0.18em] glitch-text drop-shadow-[0_0_28px_rgba(59,130,246,0.95)]';
+          ui.desc.textContent = 'Blue at full output. Gravity singularity locked.';
+          ui.energy.style.width = '100%';
           audio.blue.currentTime = 0;
-          audio.blue.volume = 0.75;
+          audio.blue.volume = 0.95;
           audio.blue.play().catch(() => {});
           break;
         case 'RED':
@@ -718,7 +804,16 @@
         handPoint = tip;
 
         if (state.mode === 'BLUE') {
-          spawn(tip.x, tip.y, 'blue', 12);
+          spawn(tip.x, tip.y, 'blue', 16);
+          spawn(tip.x, tip.y, 'aura', 4);
+          drawBlueSingularity(ctx, tip.x, tip.y, 0.95);
+          state.charge.blue = clamp(state.charge.blue + 3.8, 0, 100);
+          ui.blue.textContent = `${Math.floor(state.charge.blue)}%`;
+          if (state.charge.blue >= 100) {
+            triggerBlueMaximum(tip.x, tip.y);
+            state.charge.blue = 0;
+            ui.blue.textContent = '0%';
+          }
         } else if (state.mode === 'RED') {
           drawRedOrb(ctx, tip.x, tip.y);
           state.charge.red = clamp(state.charge.red + 2.5, 0, 100);
@@ -732,9 +827,30 @@
           spawn(tip.x, tip.y, 'purple', 10);
           drawPurpleBurst(ctx, tip.x, tip.y);
         } else if (state.mode === 'INFINITY') {
-          spawn(tip.x, tip.y, 'aura', 2);
-          drawInfinity(ctx, tip.x, tip.y, 1.25);
-        } else if (state.mode === 'VOID_STEP') {
+        const pulse = 1 + Math.sin(performance.now() * 0.008) * 0.08;
+        ctx.save();
+        ctx.translate(w / 2, h / 2);
+        ctx.strokeStyle = 'rgba(34, 211, 238, 0.35)';
+        ctx.lineWidth = 2;
+        ctx.shadowColor = '#22d3ee';
+        ctx.shadowBlur = 24;
+        for (let i = 0; i < 3; i++) {
+          ctx.beginPath();
+          ctx.arc(0, 0, (110 + i * 22) * pulse, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+        ctx.restore();
+        spawn(w / 2, h / 2, 'aura', 2);
+      }
+
+      if (state.mode === 'BLUE' && state.charge.blue > 80) {
+        state.bluePulse = Math.min(1, state.bluePulse + 0.03);
+        ctx.save();
+        ctx.globalAlpha = 0.18 + state.bluePulse * 0.22;
+        ctx.fillStyle = '#3b82f6';
+        ctx.fillRect(0, 0, w, h);
+        ctx.restore();
+      } else if (state.mode === 'VOID_STEP') {
           spawn(tip.x, tip.y, 'blue', 4);
           spawn(tip.x, tip.y, 'aura', 2);
           drawVoidStep(ctx, tip.x, tip.y);
@@ -840,7 +956,7 @@
       }
 
       if (results.poseLandmarks) {
-        state.energy = clamp(state.energy + (state.mode === 'RED' ? 3 : state.mode === 'BLUE' ? 2 : state.mode === 'PURPLE' ? 4 : state.mode === 'INFINITY' ? 2.5 : state.mode === 'VOID_STEP' ? 2.2 : 1), 0, 100);
+        state.energy = clamp(state.energy + (state.mode === 'RED' ? 3 : state.mode === 'BLUE' ? 3.4 : state.mode === 'PURPLE' ? 4 : state.mode === 'INFINITY' ? 2.5 : state.mode === 'VOID_STEP' ? 2.2 : 1), 0, 100);
       } else {
         state.energy = clamp(state.energy - 1.2, 0, 100);
       }
