@@ -218,7 +218,7 @@
       fpsLast: performance.now(),
       fps: 0,
       charge: { blue: 0, red: 0, purple: 0 },
-      combo: { blueReady: false, redReady: false, lastReadyAt: 0 },
+      combo: { blueReady: false, redReady: false, blueAt: 0, redAt: 0, lastReadyAt: 0 },
       energy: 0,
       redOrbRadius: 0,
       redOrbSpin: 0,
@@ -491,9 +491,10 @@
       state.bluePulse = 1;
       state.shockwave = 1;
       state.combo.blueReady = true;
-      state.combo.lastReadyAt = performance.now();
+      state.combo.blueAt = performance.now();
+      state.combo.lastReadyAt = state.combo.blueAt;
       audio.blue.currentTime = 0;
-      audio.blue.volume = 0.9;
+      audio.blue.volume = 0.95;
       audio.blue.play().catch(() => {});
       audio.impact.currentTime = 0;
       audio.impact.volume = 0.55;
@@ -503,9 +504,11 @@
       spawn(x, y, 'debris', 28);
       document.body.classList.add('quake-triggered');
       setTimeout(() => document.body.classList.remove('quake-triggered'), 420);
-      if (state.combo.redReady) {
+      if (state.combo.redReady && state.combo.redAt && state.combo.blueAt && state.combo.blueAt < state.combo.redAt) {
         state.combo.blueReady = false;
         state.combo.redReady = false;
+        state.combo.blueAt = 0;
+        state.combo.redAt = 0;
         triggerComboPurple(x, y);
       }
     }
@@ -546,12 +549,12 @@
     }
 
     function triggerComboPurple(x, y) {
-      log('BLUE + RED COMBO — HOLLOW PURPLE AUTO-CREATED!', 'text-purple-300 font-bold');
+      log('BLUE -> RED COMBO — HOLLOW PURPLE AUTO-CREATED!', 'text-purple-300 font-bold');
       state.charge.purple = 100;
       ui.purple.textContent = 'ERASE';
       ui.title.textContent = 'HOLLOW: PURPLE';
       ui.title.className = 'card-title text-2xl md:text-5xl font-black text-purple-300 uppercase tracking-[0.18em] animate-pulse drop-shadow-[0_0_26px_rgba(168,85,247,0.95)]';
-      ui.desc.textContent = 'Auto-created by Blue + Red combo.';
+      ui.desc.textContent = 'Auto-created by Blue then Red combo.';
       ui.energy.style.width = '100%';
       triggerDamageImpact(x, y, 'purple');
       audio.purple.currentTime = 0;
@@ -561,6 +564,8 @@
       spawn(x, y, 'debris', 96);
       state.combo.blueReady = false;
       state.combo.redReady = false;
+      state.combo.blueAt = 0;
+      state.combo.redAt = 0;
       state.charge.blue = 0;
       state.charge.red = 0;
       ui.blue.textContent = '0%';
@@ -571,16 +576,19 @@
       log('MAXIMUM OUTPUT REACHED — BLAST RELEASED!', 'text-purple-300 font-bold');
       state.shockwave = 1;
       state.combo.redReady = true;
-      state.combo.lastReadyAt = performance.now();
+      state.combo.redAt = performance.now();
+      state.combo.lastReadyAt = state.combo.redAt;
       triggerDamageImpact(x, y, 'purple');
       spawn(x, y, 'purple', 40);
       spawn(x, y, 'debris', 90);
       audio.purple.currentTime = 0;
       audio.purple.volume = 0.9;
       audio.purple.play().catch(() => {});
-      if (state.combo.blueReady) {
+      if (state.combo.blueReady && state.combo.blueAt && state.combo.blueAt < state.combo.redAt) {
         state.combo.blueReady = false;
         state.combo.redReady = false;
+        state.combo.blueAt = 0;
+        state.combo.redAt = 0;
         triggerComboPurple(x, y);
       }
     }
@@ -779,7 +787,6 @@
       ctx.scale(-1, 1);
       ctx.drawImage(results.image, 0, 0, w, h);
 
-      // subtle overlay for better contrast
       const overlay = ctx.createLinearGradient(0, 0, 0, h);
       overlay.addColorStop(0, 'rgba(0,0,0,0.08)');
       overlay.addColorStop(1, 'rgba(0,0,0,0.18)');
@@ -827,30 +834,9 @@
           spawn(tip.x, tip.y, 'purple', 10);
           drawPurpleBurst(ctx, tip.x, tip.y);
         } else if (state.mode === 'INFINITY') {
-        const pulse = 1 + Math.sin(performance.now() * 0.008) * 0.08;
-        ctx.save();
-        ctx.translate(w / 2, h / 2);
-        ctx.strokeStyle = 'rgba(34, 211, 238, 0.35)';
-        ctx.lineWidth = 2;
-        ctx.shadowColor = '#22d3ee';
-        ctx.shadowBlur = 24;
-        for (let i = 0; i < 3; i++) {
-          ctx.beginPath();
-          ctx.arc(0, 0, (110 + i * 22) * pulse, 0, Math.PI * 2);
-          ctx.stroke();
-        }
-        ctx.restore();
-        spawn(w / 2, h / 2, 'aura', 2);
-      }
-
-      if (state.mode === 'BLUE' && state.charge.blue > 80) {
-        state.bluePulse = Math.min(1, state.bluePulse + 0.03);
-        ctx.save();
-        ctx.globalAlpha = 0.18 + state.bluePulse * 0.22;
-        ctx.fillStyle = '#3b82f6';
-        ctx.fillRect(0, 0, w, h);
-        ctx.restore();
-      } else if (state.mode === 'VOID_STEP') {
+          spawn(tip.x, tip.y, 'aura', 2);
+          drawInfinity(ctx, tip.x, tip.y, 1.25);
+        } else if (state.mode === 'VOID_STEP') {
           spawn(tip.x, tip.y, 'blue', 4);
           spawn(tip.x, tip.y, 'aura', 2);
           drawVoidStep(ctx, tip.x, tip.y);
@@ -881,6 +867,15 @@
         spawn(w / 2, h / 2, 'aura', 2);
       }
 
+      if (state.mode === 'BLUE' && state.charge.blue > 80) {
+        state.bluePulse = Math.min(1, state.bluePulse + 0.03);
+        ctx.save();
+        ctx.globalAlpha = 0.18 + state.bluePulse * 0.22;
+        ctx.fillStyle = '#3b82f6';
+        ctx.fillRect(0, 0, w, h);
+        ctx.restore();
+      }
+
       if (state.shockwave > 0.01) {
         ctx.save();
         ctx.translate(w / 2, h / 2);
@@ -905,7 +900,6 @@
 
       ctx.restore();
 
-      // HUD values
       ui.energy.style.width = `${Math.min(100, Math.max(0, state.energy))}%`;
       ui.blue.textContent = `${Math.floor(state.charge.blue)}%`;
       if (state.mode !== 'PURPLE') {
