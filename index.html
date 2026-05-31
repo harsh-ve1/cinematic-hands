@@ -223,6 +223,8 @@
       redOrbSpin: 0,
       shockwave: 0,
       infinityPulse: 0,
+      infinityHold: 0,
+      voidHold: 0,
       lastBlastAt: 0,
       particles: [],
       starfield: [],
@@ -451,6 +453,21 @@
       c.restore();
     }
 
+    function drawVoidStep(c, x, y) {
+      c.save();
+      c.translate(x, y);
+      c.shadowColor = '#22d3ee';
+      c.shadowBlur = 18;
+      for (let i = 0; i < 2; i++) {
+        c.beginPath();
+        c.arc(0, 0, 45 + i * 18, 0, Math.PI * 2);
+        c.strokeStyle = i === 0 ? 'rgba(255,255,255,0.7)' : 'rgba(34,211,238,0.55)';
+        c.lineWidth = 3 - i;
+        c.stroke();
+      }
+      c.restore();
+    }
+
     function triggerDamageImpact(x, y, kind = 'red') {
       const now = performance.now();
       if (now - state.lastBlastAt < 350) return;
@@ -488,20 +505,31 @@
 
       function isHandOpen(h) {
         if (!h) return false;
-        const thumb = h[4].x < h[3].x;
         const index = h[8].y < h[6].y;
         const middle = h[12].y < h[10].y;
         const ring = h[16].y < h[14].y;
         const pinky = h[20].y < h[18].y;
-        return thumb && index && middle && ring && pinky;
+        return index && middle && ring && pinky;
+      }
+
+      function isHandClosed(h) {
+        if (!h) return false;
+        const index = h[8].y > h[6].y;
+        const middle = h[12].y > h[10].y;
+        const ring = h[16].y > h[14].y;
+        const pinky = h[20].y > h[18].y;
+        return index && middle && ring && pinky;
       }
 
       if (l && r) {
-        const wristsClose = dist(l[0], r[0]) < 0.22;
+        const wristsClose = dist(l[0], r[0]) < 0.19;
+        const palmsSpread = dist(l[8], r[8]) > 0.16;
         const bothOpen = isHandOpen(l) && isHandOpen(r);
-        const palmsSpread = dist(l[8], r[8]) > 0.18;
-        if (bothOpen && wristsClose && palmsSpread) return 'INFINITY';
-        if (dist(l[0], r[0]) < 0.1) return 'DOMAIN';
+        const bothClosed = isHandClosed(l) && isHandClosed(r);
+
+        if (bothOpen && wristsClose) return 'INFINITY';
+        if (bothClosed && wristsClose) return 'VOID_STEP';
+        if (wristsClose && palmsSpread) return 'DOMAIN';
         if (dist(l[8], r[8]) < 0.12) return 'PURPLE';
       }
 
@@ -591,7 +619,7 @@
         case 'INFINITY':
           ui.title.textContent = 'INFINITY: ACTIVE';
           ui.title.className = 'card-title text-2xl md:text-5xl font-black text-cyan-300 uppercase tracking-[0.18em] drop-shadow-[0_0_28px_rgba(34,211,238,0.95)]';
-          ui.desc.textContent = 'Neutral infinity barrier. Hand gesture locked.';
+          ui.desc.textContent = 'Easy mode: both open hands + wrists close.';
           ui.energy.style.width = '100%';
           ui.blue.textContent = '∞';
           ui.red.textContent = '∞';
@@ -599,6 +627,15 @@
           state.infinityPulse = 1;
           audio.ambient.volume = 0.36;
           audio.ambient.play().catch(() => {});
+          break;
+        case 'VOID_STEP':
+          ui.title.textContent = 'VOID STEP';
+          ui.title.className = 'card-title text-2xl md:text-5xl font-black text-white uppercase tracking-[0.18em] drop-shadow-[0_0_20px_rgba(255,255,255,0.8)]';
+          ui.desc.textContent = 'Both fists closed + wrists close = instant micro-burst.';
+          ui.energy.style.width = '85%';
+          audio.ambient.volume = 0.28;
+          audio.ambient.play().catch(() => {});
+          if (targetPoint) triggerDamageImpact(targetPoint.x, targetPoint.y, 'blue');
           break;
         case 'DOMAIN':
           ui.title.textContent = 'RYOIKI TENKAI';
@@ -697,6 +734,10 @@
         } else if (state.mode === 'INFINITY') {
           spawn(tip.x, tip.y, 'aura', 2);
           drawInfinity(ctx, tip.x, tip.y, 1.25);
+        } else if (state.mode === 'VOID_STEP') {
+          spawn(tip.x, tip.y, 'blue', 4);
+          spawn(tip.x, tip.y, 'aura', 2);
+          drawVoidStep(ctx, tip.x, tip.y);
         }
       };
 
@@ -799,7 +840,7 @@
       }
 
       if (results.poseLandmarks) {
-        state.energy = clamp(state.energy + (state.mode === 'RED' ? 3 : state.mode === 'BLUE' ? 2 : state.mode === 'PURPLE' ? 4 : state.mode === 'INFINITY' ? 2.5 : 1), 0, 100);
+        state.energy = clamp(state.energy + (state.mode === 'RED' ? 3 : state.mode === 'BLUE' ? 2 : state.mode === 'PURPLE' ? 4 : state.mode === 'INFINITY' ? 2.5 : state.mode === 'VOID_STEP' ? 2.2 : 1), 0, 100);
       } else {
         state.energy = clamp(state.energy - 1.2, 0, 100);
       }
