@@ -2,366 +2,867 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>GOJO SATORU — LIMITLESS v10.5 CELESTIAL</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Gojo Satoru — Limitless v8 ULTRA</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/holistic/holistic.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
-  
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/holistic/holistic.js" crossorigin="anonymous"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;900&family=Share+Tech+Mono&display=swap');
-    
-    :root { --cyan: #22d3ee; --blue: #3b82f6; --red: #ef4444; --purple: #a855f7; }
-    * { margin:0; padding:0; box-sizing:border-box; }
-    html, body { width:100%; height:100%; overflow:hidden; background:#000; color:#fff; font-family:'Share Tech Mono',monospace; user-select:none; }
-    canvas { position:absolute; inset:0; }
-    #three-container { position:absolute; inset:0; z-index:2; opacity:0; transition:opacity 2s ease; }
-
-    .hud { background:rgba(3,7,18,0.96); border:1px solid rgba(34,211,238,0.55); backdrop-filter:blur(32px); border-radius:24px; box-shadow:0 0 90px rgba(34,211,238,0.25); }
-    .orb { font-family:'Orbitron',sans-serif; letter-spacing:0.28em; font-weight:900; }
-
-    .scanline { position:absolute; left:0; width:100%; height:7px; background:linear-gradient(transparent, #67e8f9, transparent); box-shadow:0 0 40px #67e8f9; animation:scan 2.2s linear infinite; z-index:100; }
-    @keyframes scan { 0%{top:-50%} 100%{top:150%} }
-
-    #awaken-btn {
-      transition:all 0.5s cubic-bezier(0.23,1,0.32,1);
-      box-shadow:0 0 50px #22d3ee;
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+    :root{--cyan:#22d3ee;--blue:#3b82f6;--red:#ef4444;--purple:#a855f7}
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Share Tech Mono',monospace;color:#fff;touch-action:manipulation;user-select:none}
+    canvas{position:absolute;inset:0}
+    #cv-bg{z-index:1}#cv-dom{z-index:2;opacity:0;transition:opacity .7s}
+    #cv-main{z-index:3}#cv-fx{z-index:4;pointer-events:none}
+    #ui{position:absolute;inset:0;z-index:10;pointer-events:none;display:flex;flex-direction:column;justify-content:space-between;padding:14px}
+    .hud{background:rgba(0,0,0,.78);border:1px solid rgba(34,211,238,.28);backdrop-filter:blur(18px);border-radius:16px;box-shadow:0 0 40px rgba(34,211,238,.08),inset 0 0 24px rgba(34,211,238,.03)}
+    .orb{font-family:'Orbitron',sans-serif;letter-spacing:.14em}
+    @keyframes glitch{
+      0%{text-shadow:2px 0 #ff3355,-2px 0 #2dd4ff;transform:translate(0,0) skewX(0deg)}
+      20%{text-shadow:-3px 0 #ff3355,3px 0 #2dd4ff;transform:translate(-1px,.5px) skewX(-1.2deg)}
+      40%{text-shadow:3px 0 #ff3355,-3px 0 #2dd4ff;transform:translate(1px,-.5px) skewX(1.2deg)}
+      60%{text-shadow:-1px 0 #ff3355,1px 0 #2dd4ff;transform:translate(.5px,0)}
+      80%,100%{text-shadow:2px 0 #ff3355,-2px 0 #2dd4ff;transform:translate(0,0)}
     }
-    #awaken-btn:hover { transform:scale(1.12); box-shadow:0 0 80px #a855f7; }
-    #awaken-btn:active { transform:scale(0.92); }
+    .glitch{animation:glitch 1.6s infinite}
+    @keyframes quake{
+      0%,100%{transform:translate(0,0)}10%{transform:translate(-5px,4px)}
+      20%{transform:translate(5px,-4px)}30%{transform:translate(-4px,-5px)}
+      40%{transform:translate(4px,3px)}50%{transform:translate(-3px,5px)}
+      60%{transform:translate(3px,-3px)}70%{transform:translate(-4px,2px)}
+      80%{transform:translate(4px,-2px)}90%{transform:translate(-2px,4px)}
+    }
+    .quake{animation:quake .09s linear infinite}
+    @keyframes breathe{0%,100%{opacity:.7;transform:scale(1)}50%{opacity:1;transform:scale(1.06)}}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    @keyframes spinR{to{transform:rotate(-360deg)}}
+    @keyframes shimmer{0%{background-position:200% center}100%{background-position:-200% center}}
+    .shimmer{background:linear-gradient(90deg,#22d3ee,#3b82f6,#a855f7,#22d3ee);background-size:200% auto;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 3s linear infinite}
+    @keyframes scanline{0%{top:-8%}100%{top:108%}}
+    #scanline{position:absolute;left:0;width:100%;height:2px;background:linear-gradient(90deg,transparent,rgba(34,211,238,.18),transparent);z-index:6;pointer-events:none;animation:scanline 4s linear infinite}
+    #dmg-overlay{position:absolute;inset:0;z-index:9;pointer-events:none;opacity:0}
+    @keyframes dmgFlash{0%{opacity:0}12%{opacity:1}100%{opacity:0}}
+    #hold-bar-wrap{height:3px;border-radius:999px;background:rgba(255,255,255,.08);display:none;overflow:hidden;margin-top:8px}
+    #hold-bar{height:100%;width:0%;transition:width .05s linear;border-radius:999px}
+    .dbg{position:absolute;top:50%;right:14px;transform:translateY(-50%);z-index:12;width:170px;font-size:9px;padding:10px;display:none;pointer-events:none;letter-spacing:.05em}
   </style>
 </head>
 <body>
-  <div class="scanline"></div>
-  
-  <canvas id="cv-bg"></canvas>
-  <div id="three-container"></div>
-  <canvas id="cv-main"></canvas>
-  <canvas id="cv-fx"></canvas>
+<audio id="au-amb" src="aura.mp3" loop preload="auto"></audio>
+<audio id="au-blue" src="blue_lapse.mp3" preload="auto"></audio>
+<audio id="au-red" src="red_reversal.mp3" preload="auto"></audio>
+<audio id="au-purple" src="hollow_purple.mp3" preload="auto"></audio>
+<audio id="au-domain" src="domain_expansion.mp3" preload="auto"></audio>
+<audio id="au-impact" src="damage.mp3" preload="auto"></audio>
+<video id="vid" autoplay playsinline style="display:none"></video>
 
-  <!-- UI -->
-  <div class="absolute inset-0 z-50 pointer-events-none flex flex-col justify-between p-8">
-    <div class="flex justify-between gap-8">
-      <div class="hud p-8 w-80">
-        <div class="orb text-3xl text-cyan">GOJO SATORU</div>
-        <div class="text-xs text-slate-400 mt-1">LIMITLESS v10.5 CELESTIAL</div>
-        <div class="mt-8 grid grid-cols-2 gap-y-4 text-sm">
-          <div class="text-slate-400">CURSED ENERGY</div>
-          <div id="ce-val" class="text-right font-bold text-cyan">100%</div>
-          <div class="text-slate-400">SIX EYES</div>
-          <div id="sixeyes-val" class="text-right font-bold text-purple-400">0%</div>
-          <div class="text-slate-400">FPS</div>
-          <div id="fps-val" class="text-right font-bold text-emerald-400">00</div>
-          <div class="text-slate-400">MODE</div>
-          <div id="mode-val" class="text-right font-bold text-cyan">IDLE</div>
+<div id="scanline"></div>
+<canvas id="cv-bg"></canvas>
+<canvas id="cv-dom"></canvas>
+<canvas id="cv-main"></canvas>
+<canvas id="cv-fx"></canvas>
+<div id="dmg-overlay"></div>
+
+<!-- Debug -->
+<div class="dbg hud orb" id="dbg-panel">
+  <div style="color:#22d3ee;margin-bottom:6px;font-size:10px">◈ DEBUG</div>
+  <div id="d-gest" style="color:#fbbf24">Gesture: —</div>
+  <div id="d-conf" style="color:#34d399">Confidence: —</div>
+  <div id="d-hold" style="color:#a855f7">Hold: 0ms</div>
+  <div id="d-hands" style="color:#94a3b8">Hands: —</div>
+  <div id="d-ext" style="color:#64748b">Ext: ——</div>
+  <hr style="border-color:rgba(34,211,238,.2);margin:5px 0">
+  <div id="d-mode" style="color:#22d3ee">Mode: IDLE</div>
+</div>
+
+<div id="ui">
+  <!-- TOP -->
+  <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">
+    <!-- LEFT HUD -->
+    <div class="hud" style="padding:14px;min-width:210px">
+      <div class="orb" style="font-size:18px;font-weight:900"><span class="shimmer">GOJO SATORU</span> <span style="color:rgba(255,255,255,.35);font-size:8px;vertical-align:super">v8</span></div>
+      <div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:3px 8px;font-size:9px;text-transform:uppercase;letter-spacing:.15em;color:#64748b">
+        <span>CE</span><span id="h-ce" style="text-align:right;color:#22d3ee;font-weight:bold">∞</span>
+        <span>FPS</span><span id="h-fps" style="text-align:right;color:#4ade80;font-weight:bold">--</span>
+        <span>Body</span><span id="h-body" style="text-align:right;color:#fbbf24;font-weight:bold">OFFLINE</span>
+        <span>Hands</span><span id="h-hands" style="text-align:right;color:#fbbf24;font-weight:bold">OFFLINE</span>
+        <span>Mode</span><span id="h-mode" style="text-align:right;color:#22d3ee;font-weight:bold">IDLE</span>
+      </div>
+      <!-- CE bar -->
+      <div style="margin-top:8px">
+        <div style="font-size:8px;color:#22d3ee;text-transform:uppercase;letter-spacing:.2em;margin-bottom:3px">Cursed Energy</div>
+        <div style="height:7px;border-radius:999px;background:rgba(0,0,0,.6);border:1px solid rgba(34,211,238,.18);overflow:hidden">
+          <div id="h-energy" style="height:100%;width:0%;background:linear-gradient(90deg,#22d3ee,#3b82f6,#a855f7);transition:width .15s;box-shadow:0 0 10px rgba(34,211,238,.5)"></div>
         </div>
       </div>
-
-      <div class="hud p-8 w-96">
-        <div class="text-cyan text-xs tracking-widest">SOUL TELEMETRY</div>
-        <div id="logs" class="mt-6 h-64 overflow-auto text-xs text-slate-300 space-y-1 pr-3"></div>
+      <!-- Six Eyes bar -->
+      <div style="margin-top:6px">
+        <div style="font-size:8px;color:#a855f7;text-transform:uppercase;letter-spacing:.2em;margin-bottom:3px">Six Eyes</div>
+        <div style="height:4px;border-radius:999px;background:rgba(0,0,0,.6);border:1px solid rgba(168,85,247,.18);overflow:hidden">
+          <div id="h-sixeyes" style="height:100%;width:0%;background:linear-gradient(90deg,#a855f7,#7c3aed);transition:width .2s;box-shadow:0 0 8px rgba(168,85,247,.5)"></div>
+        </div>
+      </div>
+      <div style="margin-top:8px;pointer-events:auto">
+        <button onclick="toggleDbg()" style="font-size:8px;color:#475569;background:none;border:1px solid rgba(71,85,105,.35);border-radius:6px;padding:2px 8px;cursor:pointer;font-family:'Share Tech Mono',monospace;letter-spacing:.1em">◈ DEBUG</button>
       </div>
     </div>
-
-    <div class="text-center pointer-events-auto">
-      <div id="title" class="orb text-7xl tracking-widest text-white">SYSTEM IDLE</div>
-      <div id="subtitle" class="text-cyan/70 mt-4 text-lg">PRESS TO AWAKEN THE STRONGEST</div>
-    </div>
-
-    <div class="flex justify-center pointer-events-auto">
-      <button id="awaken-btn"
-        class="hud px-28 py-9 text-3xl font-black tracking-widest border-2 border-cyan hover:bg-cyan/10">
-        ⚡ AWAKEN SIX EYES + CAMERA
-      </button>
+    <!-- RIGHT terminal -->
+    <div class="hud" style="padding:12px;width:230px;height:185px;display:flex;flex-direction:column">
+      <div style="font-size:8px;text-transform:uppercase;letter-spacing:.22em;color:#22d3ee;border-bottom:1px solid rgba(34,211,238,.13);padding-bottom:5px;margin-bottom:5px;display:flex;justify-content:space-between;align-items:center">
+        <span>Soul Telemetry</span>
+        <span style="display:flex;align-items:center;gap:3px;color:#ef4444;animation:breathe 1.4s ease-in-out infinite"><span style="width:5px;height:5px;border-radius:50%;background:#ef4444;display:inline-block"></span>LIVE</span>
+      </div>
+      <div id="logs" style="flex:1;overflow-y:auto;font-size:9px;line-height:1.6;color:#94a3b8">
+        <p style="color:#22d3ee">&gt; Limitless v8 ULTRA booting...</p>
+        <p style="color:#475569">&gt; Awaiting vessel signature.</p>
+      </div>
     </div>
   </div>
 
-  <script>
-    // =====================================================
-    // LIMITLESS v10.5 CELESTIAL — SINGLE BUTTON GOD MODE
-    // 1380+ Lines | Mind Blowing Animation | Fully Working
-    // =====================================================
+  <!-- CENTER ornament -->
+  <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none">
+    <div style="position:relative;width:180px;height:180px;display:flex;align-items:center;justify-content:center">
+      <div style="position:absolute;inset:0;border-radius:50%;border:1px solid rgba(34,211,238,.22);animation:spin 15s linear infinite"></div>
+      <div style="position:absolute;inset:14px;border-radius:50%;border:1px solid rgba(59,130,246,.14);animation:spinR 22s linear infinite"></div>
+      <div style="position:absolute;inset:28px;border-radius:50%;border:1px solid rgba(168,85,247,.1);animation:spin 30s linear infinite"></div>
+      <div style="width:7px;height:7px;border-radius:50%;background:#22d3ee;animation:breathe 2s ease-in-out infinite;box-shadow:0 0 18px #22d3ee,0 0 36px rgba(34,211,238,.4)"></div>
+      <div style="position:absolute;width:100%;height:1px;background:linear-gradient(90deg,transparent,rgba(34,211,238,.12),transparent)"></div>
+      <div style="position:absolute;height:100%;width:1px;background:linear-gradient(180deg,transparent,rgba(34,211,238,.12),transparent)"></div>
+    </div>
+  </div>
 
-    const CONFIG = {
-      MAX_PARTICLES: 1850,
-      MAX_LIGHTNING: 85,
-      STAR_COUNT: 6200,
-      ENERGY_GAIN: 0.55,
-      SIX_EYES_GAIN: 1.6
-    };
+  <!-- BOTTOM -->
+  <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+    <!-- Technique title -->
+    <div class="hud" style="padding:12px 28px;text-align:center;max-width:88vw">
+      <div id="t-title" class="orb" style="font-size:26px;font-weight:900;color:#475569;text-transform:uppercase">SYSTEM IDLE</div>
+      <div id="t-desc" style="margin-top:3px;font-size:9px;text-transform:uppercase;letter-spacing:.2em;color:rgba(34,211,238,.55);font-weight:bold">Stand in frame to awaken the Limitless</div>
+      <div id="hold-bar-wrap"><div id="hold-bar"></div></div>
+    </div>
 
-    let WIDTH = innerWidth, HEIGHT = innerHeight;
-    let currentMode = "IDLE", energy = 100, sixEyes = 0;
-    let holistic = null, camera = null, isAwakened = false;
+    <!-- Gesture guide -->
+    <div class="hud" style="padding:5px 14px;font-size:8px;text-transform:uppercase;letter-spacing:.1em;color:#374151;display:flex;flex-wrap:wrap;gap:6px;justify-content:center">
+      <span><span style="color:#22d3ee">✕ Cross 2 fingers</span>=Domain</span><span style="color:#1e293b">|</span>
+      <span><span style="color:#3b82f6">○ Index+Thumb</span>=Blue</span><span style="color:#1e293b">|</span>
+      <span><span style="color:#ef4444">☝ One finger</span>=Red</span><span style="color:#1e293b">|</span>
+      <span><span style="color:#a855f7">◎ Tips close</span>=Purple</span><span style="color:#1e293b">|</span>
+      <span><span style="color:#e2e8f0">✋✋ Both open</span>=Infinity</span>
+    </div>
 
-    const canvases = { bg: document.getElementById('cv-bg'), fx: document.getElementById('cv-fx') };
-    const ctx = { bg: canvases.bg.getContext('2d', {alpha:false}), fx: canvases.fx.getContext('2d', {alpha:true}) };
+    <!-- Metrics + button -->
+    <div style="width:100%;display:flex;align-items:flex-end;justify-content:space-between;gap:8px;pointer-events:auto;padding:0 2px">
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <div class="hud" style="padding:9px 12px;min-width:82px;text-align:center">
+          <div style="font-size:7px;text-transform:uppercase;letter-spacing:.18em;color:#93c5fd;font-weight:bold">Blue</div>
+          <div id="m-blue" style="font-size:20px;font-weight:900;color:#fff;margin-top:2px">0%</div>
+          <div style="height:2px;border-radius:999px;background:rgba(59,130,246,.15);margin-top:3px;overflow:hidden"><div id="b-blue" style="height:100%;width:0%;background:#3b82f6;transition:width .1s"></div></div>
+        </div>
+        <div class="hud" style="padding:9px 12px;min-width:82px;text-align:center">
+          <div style="font-size:7px;text-transform:uppercase;letter-spacing:.18em;color:#fca5a5;font-weight:bold">Red</div>
+          <div id="m-red" style="font-size:20px;font-weight:900;color:#fff;margin-top:2px">0%</div>
+          <div style="height:2px;border-radius:999px;background:rgba(239,68,68,.15);margin-top:3px;overflow:hidden"><div id="b-red" style="height:100%;width:0%;background:#ef4444;transition:width .1s"></div></div>
+        </div>
+        <div class="hud" style="padding:9px 12px;min-width:82px;text-align:center">
+          <div style="font-size:7px;text-transform:uppercase;letter-spacing:.18em;color:#d8b4fe;font-weight:bold">Purple</div>
+          <div id="m-purple" style="font-size:20px;font-weight:900;color:#fff;margin-top:2px">LOCK</div>
+          <div style="height:2px;border-radius:999px;background:rgba(168,85,247,.15);margin-top:3px;overflow:hidden"><div id="b-purple" style="height:100%;width:0%;background:#a855f7;transition:width .1s"></div></div>
+        </div>
+      </div>
+      <button id="awaken-btn" style="position:relative;overflow:hidden;border-radius:14px;border:1px solid rgba(34,211,238,.65);padding:13px 32px;font-family:'Orbitron',sans-serif;font-weight:900;font-size:12px;letter-spacing:.18em;background:rgba(0,0,0,.92);cursor:pointer;transition:transform .12s;text-transform:uppercase;pointer-events:auto">
+        <span style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(34,211,238,.12),rgba(59,130,246,.18),rgba(168,85,247,.12));opacity:.9"></span>
+        <span style="position:relative;z-index:1;color:#fff">⚡ Awaken Six Eyes</span>
+      </button>
+    </div>
+  </div>
+</div>
 
-    function resize() {
-      Object.values(canvases).forEach(c => { c.width = WIDTH = innerWidth; c.height = HEIGHT = innerHeight; });
+<script>
+// ─── CANVAS ───────────────────────────────────────────
+const vid=document.getElementById('vid');
+const cvBg=document.getElementById('cv-bg');
+const cvDom=document.getElementById('cv-dom');
+const cvMain=document.getElementById('cv-main');
+const cvFx=document.getElementById('cv-fx');
+const cBg=cvBg.getContext('2d',{alpha:false});
+const cDom=cvDom.getContext('2d',{alpha:false});
+const cMain=cvMain.getContext('2d',{alpha:false,desynchronized:true});
+const cFx=cvFx.getContext('2d',{alpha:true});
+const dmgEl=document.getElementById('dmg-overlay');
+
+function resize(){[cvBg,cvDom,cvMain,cvFx].forEach(c=>{c.width=innerWidth;c.height=innerHeight});}
+addEventListener('resize',resize);resize();
+
+// ─── AUDIO ───────────────────────────────────────────
+const AU={
+  amb:document.getElementById('au-amb'),
+  blue:document.getElementById('au-blue'),
+  red:document.getElementById('au-red'),
+  purple:document.getElementById('au-purple'),
+  domain:document.getElementById('au-domain'),
+  impact:document.getElementById('au-impact'),
+  play(k,vol=1){const a=this[k];if(!a)return;a.volume=vol;a.currentTime=0;a.play().catch(()=>{});},
+  stopAll(){['blue','red','purple','domain'].forEach(k=>{const a=this[k];if(a){a.pause();a.currentTime=0;}});}
+};
+
+// ─── UI REFS ──────────────────────────────────────────
+const UI={
+  fps:document.getElementById('h-fps'),
+  body:document.getElementById('h-body'),
+  hands:document.getElementById('h-hands'),
+  energy:document.getElementById('h-energy'),
+  sixeyes:document.getElementById('h-sixeyes'),
+  mode:document.getElementById('h-mode'),
+  logs:document.getElementById('logs'),
+  title:document.getElementById('t-title'),
+  desc:document.getElementById('t-desc'),
+  blue:document.getElementById('m-blue'),red:document.getElementById('m-red'),purple:document.getElementById('m-purple'),
+  bBlue:document.getElementById('b-blue'),bRed:document.getElementById('b-red'),bPurple:document.getElementById('b-purple'),
+  holdWrap:document.getElementById('hold-bar-wrap'),holdBar:document.getElementById('hold-bar'),
+};
+
+// ─── DEBUG ────────────────────────────────────────────
+let dbgOn=false;
+const DBG={g:document.getElementById('d-gest'),c:document.getElementById('d-conf'),h:document.getElementById('d-hold'),hn:document.getElementById('d-hands'),e:document.getElementById('d-ext'),m:document.getElementById('d-mode')};
+function toggleDbg(){dbgOn=!dbgOn;document.getElementById('dbg-panel').style.display=dbgOn?'block':'none';}
+
+// ─── STATE ────────────────────────────────────────────
+const S={
+  mode:'IDLE',energy:0,sixeyes:0,
+  charge:{blue:0,red:0},
+  combo:{blueReady:false,redReady:false,blueAt:0,redAt:0},
+  holdCandidate:'IDLE',holdStart:0,HOLD_MS:550,
+  shockwave:0,shockCol:'#fff',
+  bluePulse:0,lastImpact:0,
+  particles:[],lightnings:[],cracks:[],ripples:[],
+  domStars:[],
+  fpsCount:0,fpsLast:performance.now(),fps:0,
+  redOrbR:0,redOrbSpin:0,
+};
+
+// ─── HELPERS ──────────────────────────────────────────
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const rnd=(a,b)=>a+Math.random()*(b-a);
+const dist2=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+
+function log(msg,color='#22d3ee'){
+  const p=document.createElement('p');
+  const t=new Date().toLocaleTimeString('en-GB',{hour12:false});
+  p.style.cssText=`color:${color};font-size:9px;line-height:1.55`;
+  p.innerHTML=`<span style="color:#1e293b">[${t}]</span> &gt; ${msg}`;
+  UI.logs.appendChild(p);
+  while(UI.logs.children.length>35)UI.logs.removeChild(UI.logs.firstChild);
+  UI.logs.scrollTop=UI.logs.scrollHeight;
+}
+
+function gColor(m){return{BLUE:'#3b82f6',RED:'#ef4444',PURPLE:'#a855f7',DOMAIN:'#c7d2fe',INFINITY:'#22d3ee',VOID_STEP:'#f1f5f9'}[m]||'#22d3ee';}
+
+// ─── PARTICLE ─────────────────────────────────────────
+class P{
+  constructor(x,y,type,opts={}){
+    this.x=x;this.y=y;this.type=type;
+    this.vx=(Math.random()-.5)*4;this.vy=(Math.random()-.5)*4;
+    this.ax=0;this.ay=0;
+    this.life=1;this.maxLife=1;this.r=2;this.alpha=1;
+    this.rot=Math.random()*Math.PI*2;this.rotV=(Math.random()-.5)*.3;
+    this.col='#22d3ee';this.blur=0;this.isDebris=false;
+    switch(type){
+      case 'aura':    this.maxLife=this.life=rnd(22,44);this.r=rnd(2,6);this.vx*=.3;this.vy=-rnd(.8,2.4);this.col='#22d3ee';this.blur=this.r*3;break;
+      case 'aura-r':  this.maxLife=this.life=rnd(18,34);this.r=rnd(2,5);this.vx*=.4;this.vy=-rnd(.5,2);this.col='#ef4444';this.blur=this.r*3;break;
+      case 'aura-p':  this.maxLife=this.life=rnd(20,40);this.r=rnd(2,6);this.vx*=.3;this.vy=-rnd(.7,2.2);this.col='#a855f7';this.blur=this.r*3;break;
+      case 'blue':    this.maxLife=this.life=rnd(12,26);this.r=rnd(1.5,4);this.vx*=3;this.vy*=3;this.col='#3b82f6';this.blur=this.r*4;break;
+      case 'red':     this.maxLife=this.life=rnd(10,20);this.r=rnd(2,5);this.vx*=5;this.vy*=5;this.col='#ef4444';this.blur=this.r*4;break;
+      case 'purple':  this.maxLife=this.life=rnd(12,24);this.r=rnd(2,6);this.vx*=5.5;this.vy*=5.5;this.col='#a855f7';this.blur=this.r*5;break;
+      case 'white':   this.maxLife=this.life=rnd(8,16);this.r=rnd(1,3);this.vx*=7;this.vy*=7;this.col='#fff';this.blur=this.r*6;break;
+      case 'star':    this.maxLife=this.life=rnd(40,80);this.r=rnd(.5,2);this.vx*=.4;this.vy*=.4;this.col='#e2e8f0';this.blur=2;break;
+      case 'debris':  this.maxLife=this.life=rnd(30,58);this.r=rnd(5,14);this.vx=(Math.random()-.5)*22;this.vy=(Math.random()-.5)*22;this.isDebris=true;break;
+      case 'orb':     this.maxLife=this.life=rnd(25,50);this.r=rnd(6,16);this.vx=opts.vx||0;this.vy=opts.vy||0;this.col=opts.col||'#22d3ee';this.blur=this.r*2;break;
     }
-    window.addEventListener('resize', resize);
-    resize();
+  }
+  update(tx,ty){
+    if(this.type==='aura'||this.type==='aura-r'||this.type==='aura-p'){
+      this.vx+=Math.sin((performance.now()*.008)+this.rot)*.14;this.vy-=.04;this.vx*=.97;this.vy*=.98;
+    } else if(this.type==='blue'&&tx!=null){
+      const dx=tx-this.x,dy=ty-this.y,d=Math.hypot(dx,dy);
+      if(d>6){this.ax+=dx/d*15/(d*.07);this.ay+=dy/d*15/(d*.07);}
+      this.vx*=.91;this.vy*=.91;
+    } else if(this.isDebris){this.vy+=.5;this.vx*=.987;this.vy*=.987;this.rot+=this.rotV;}
+    this.vx+=this.ax;this.vy+=this.ay;this.x+=this.vx;this.y+=this.vy;
+    this.ax=0;this.ay=0;this.life--;this.alpha=this.life/this.maxLife;
+  }
+  draw(c){
+    if(this.alpha<=.02)return;
+    c.save();c.globalAlpha=clamp(this.alpha,0,1);c.translate(this.x,this.y);
+    if(this.isDebris){
+      c.rotate(this.rot);c.shadowColor='#000';c.shadowBlur=6;
+      c.beginPath();c.moveTo(-this.r,-.4*this.r);c.lineTo(.7*this.r,-.6*this.r);c.lineTo(this.r,.5*this.r);c.lineTo(-.3*this.r,this.r);c.closePath();
+      c.fillStyle='rgba(28,30,38,.95)';c.strokeStyle='rgba(140,150,170,.75)';c.lineWidth=1;c.fill();c.stroke();
+    } else {
+      c.shadowColor=this.col;c.shadowBlur=this.blur;c.fillStyle=this.col;
+      c.beginPath();c.arc(0,0,this.r,0,Math.PI*2);c.fill();
+    }
+    c.restore();
+  }
+}
 
-    // ==================== 3D DOMAIN (Mind Blowing) ====================
-    let scene, camera3D, renderer3D, domainObjs = [];
-    function initMindBlowingDomain() {
-      renderer3D = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-      renderer3D.setSize(WIDTH, HEIGHT);
-      renderer3D.setPixelRatio(Math.min(2.5, devicePixelRatio));
-      document.getElementById('three-container').appendChild(renderer3D.domElement);
+function spawn(x,y,type,n,opts={}){const MAX=1000;for(let i=0;i<n;i++){if(S.particles.length>=MAX)S.particles.shift();S.particles.push(new P(x,y,type,opts));}}
 
-      scene = new THREE.Scene();
-      camera3D = new THREE.PerspectiveCamera(68, WIDTH/HEIGHT, 0.1, 10000);
-      camera3D.position.z = 1450;
-
-      // Multiple Void Layers
-      for (let i = 0; i < 4; i++) {
-        const mesh = new THREE.Mesh(
-          new THREE.SphereGeometry(1050 - i*180, 80, 80),
-          new THREE.MeshBasicMaterial({
-            color: [0x3b0764, 0x6b21a8, 0xa855f7, 0xc4b5fd][i],
-            transparent: true,
-            opacity: 0.25 - i*0.05,
-            side: THREE.BackSide
-          })
-        );
-        scene.add(mesh);
-        domainObjs.push(mesh);
+// ─── LIGHTNING ────────────────────────────────────────
+class Lightning{
+  constructor(x1,y1,x2,y2,col,life=14){
+    this.x1=x1;this.y1=y1;this.x2=x2;this.y2=y2;this.col=col;this.life=life;this.maxLife=life;this.segs=this._gen();
+  }
+  _gen(){
+    let pts=[{x:this.x1,y:this.y1},{x:this.x2,y:this.y2}];
+    for(let iter=0;iter<4;iter++){
+      const n=[];
+      for(let i=0;i<pts.length-1;i++){
+        n.push(pts[i]);
+        n.push({x:(pts[i].x+pts[i+1].x)/2+(Math.random()-.5)*90,y:(pts[i].y+pts[i+1].y)/2+(Math.random()-.5)*90});
       }
+      n.push(pts[pts.length-1]);pts=n;
+    }
+    return pts;
+  }
+  draw(c){
+    const a=this.life/this.maxLife;
+    c.save();c.globalAlpha=a*.88;c.strokeStyle=this.col;c.shadowColor=this.col;c.shadowBlur=20;c.lineWidth=a*2.2;
+    c.beginPath();this.segs.forEach((p,i)=>i?c.lineTo(p.x,p.y):c.moveTo(p.x,p.y));c.stroke();
+    c.lineWidth=a*.7;c.strokeStyle='#fff';c.globalAlpha=a*.35;c.stroke();
+    c.restore();this.life--;
+  }
+}
+function spawnLightning(x1,y1,x2,y2,col){if(S.lightnings.length>24)S.lightnings.shift();S.lightnings.push(new Lightning(x1,y1,x2,y2,col));}
 
-      // Epic Star Field
-      const positions = new Float32Array(CONFIG.STAR_COUNT * 3);
-      for (let i = 0; i < CONFIG.STAR_COUNT * 3; i += 3) {
-        const radius = 1300 + Math.random() * 1200;
-        const theta = Math.random() * Math.PI * 2;
-        const phi = Math.acos(2 * Math.random() - 1);
-        positions[i]     = radius * Math.sin(phi) * Math.cos(theta);
-        positions[i + 1] = radius * Math.sin(phi) * Math.sin(theta) * 0.85;
-        positions[i + 2] = radius * Math.cos(phi);
+// ─── VOID CRACK ───────────────────────────────────────
+class VoidCrack{
+  constructor(x,y){this.x=x;this.y=y;this.branches=this._gen(x,y,Math.random()*Math.PI*2,rnd(55,175),5);this.life=this.maxLife=rnd(40,75);}
+  _gen(x,y,angle,len,depth){
+    if(depth<=0||len<8)return[];
+    const x2=x+Math.cos(angle)*len,y2=y+Math.sin(angle)*len;
+    const s=[{x1:x,y1:y,x2,y2}];
+    const br=(rnd(1,3))|0;
+    for(let i=0;i<br;i++)s.push(...this._gen(x2,y2,angle+(Math.random()-.5)*1.5,len*rnd(.5,.75),depth-1));
+    return s;
+  }
+  draw(c){
+    const a=this.life/this.maxLife;
+    c.save();c.globalAlpha=a*.72;c.strokeStyle='rgba(168,85,247,.9)';c.shadowColor='#a855f7';c.shadowBlur=14;c.lineWidth=a*1.6;
+    this.branches.forEach(s=>{c.beginPath();c.moveTo(s.x1,s.y1);c.lineTo(s.x2,s.y2);c.stroke();});
+    c.restore();this.life--;
+  }
+}
+function spawnCracks(x,y,n=3){for(let i=0;i<n;i++)S.cracks.push(new VoidCrack(x,y));}
+
+// ─── RIPPLE ───────────────────────────────────────────
+class Ripple{
+  constructor(x,y,col){this.x=x;this.y=y;this.col=col;this.r=10;this.life=this.maxLife=40;}
+  draw(c){
+    const a=(this.life/this.maxLife);this.r+=6;
+    c.save();c.globalAlpha=a*.5;c.strokeStyle=this.col;c.shadowColor=this.col;c.shadowBlur=16;c.lineWidth=2;
+    c.beginPath();c.arc(this.x,this.y,this.r,0,Math.PI*2);c.stroke();
+    c.restore();this.life--;
+  }
+}
+function spawnRipple(x,y,col){S.ripples.push(new Ripple(x,y,col));}
+
+// ─── DRAW HELPERS ─────────────────────────────────────
+function drawInfinity(c,x,y,intensity=1,col='#22d3ee'){
+  const t=performance.now();
+  const r=85+Math.sin(t*.004)*10+intensity*20;
+  c.save();c.translate(x,y);
+  c.beginPath();c.arc(0,0,r+24,0,Math.PI*2);
+  c.strokeStyle=`rgba(34,211,238,${.04+.035*intensity})`;c.lineWidth=2;c.stroke();
+  c.beginPath();c.arc(0,0,r,0,Math.PI*2);
+  c.strokeStyle=col;c.shadowColor=col;c.shadowBlur=34;c.lineWidth=3.5+intensity;c.stroke();
+  c.beginPath();c.arc(0,0,r*.5,0,Math.PI*2);
+  c.strokeStyle=`rgba(255,255,255,${.1+.07*intensity})`;c.shadowBlur=10;c.lineWidth=1.2;c.stroke();
+  c.rotate(t*.0022*intensity);c.setLineDash([8,18]);c.lineWidth=1;
+  c.strokeStyle=`rgba(255,255,255,${.14+.08*intensity})`;c.shadowBlur=0;
+  c.beginPath();c.arc(0,0,r*.75,0,Math.PI*2);c.stroke();
+  c.setLineDash([]);c.restore();
+}
+
+function drawRedOrb(c,x,y){
+  S.redOrbR=Math.min(S.redOrbR+2,50);S.redOrbSpin+=.18;
+  c.save();c.translate(x,y);
+  const g=c.createRadialGradient(0,0,0,0,0,S.redOrbR*3.6);
+  g.addColorStop(0,'rgba(255,30,60,.92)');g.addColorStop(.4,'rgba(255,30,60,.22)');g.addColorStop(1,'rgba(255,30,60,0)');
+  c.beginPath();c.arc(0,0,S.redOrbR*3.6,0,Math.PI*2);c.fillStyle=g;c.fill();
+  c.beginPath();c.arc(0,0,S.redOrbR,0,Math.PI*2);c.fillStyle='#ff1744';c.shadowColor='#ff1744';c.shadowBlur=40;c.fill();
+  c.rotate(S.redOrbSpin);
+  c.beginPath();c.arc(0,0,S.redOrbR*.36,0,Math.PI*2);c.fillStyle='#050508';c.shadowBlur=0;c.fill();
+  c.strokeStyle='rgba(255,100,100,.45)';c.lineWidth=1.5;c.shadowColor='#ff1744';c.shadowBlur=10;c.setLineDash([6,14]);
+  c.beginPath();c.arc(0,0,S.redOrbR*1.6,0,Math.PI*2);c.stroke();c.setLineDash([]);
+  c.restore();
+}
+
+function drawBlue(c,x,y,scale=1){
+  const t=performance.now();const pulse=1+Math.sin(t*.012)*.1;const r=20*scale*pulse;
+  c.save();c.translate(x,y);
+  const og=c.createRadialGradient(0,0,0,0,0,r*9);
+  og.addColorStop(0,'rgba(255,255,255,.18)');og.addColorStop(.15,'rgba(34,211,238,.3)');og.addColorStop(.4,'rgba(59,130,246,.15)');og.addColorStop(1,'rgba(59,130,246,0)');
+  c.fillStyle=og;c.beginPath();c.arc(0,0,r*9,0,Math.PI*2);c.fill();
+  c.shadowColor='#22d3ee';c.shadowBlur=34;c.strokeStyle='rgba(34,211,238,.95)';c.lineWidth=3;
+  c.beginPath();c.arc(0,0,r*2.5,0,Math.PI*2);c.stroke();
+  c.rotate(t*.004);c.strokeStyle='rgba(59,130,246,.45)';c.lineWidth=1;c.setLineDash([5,12]);
+  c.beginPath();c.arc(0,0,r*4,0,Math.PI*2);c.stroke();c.setLineDash([]);
+  c.fillStyle='#fff';c.shadowBlur=26;c.beginPath();c.arc(0,0,r*.5,0,Math.PI*2);c.fill();
+  c.restore();
+}
+
+function drawPurpleBurst(c,x,y){
+  const t=performance.now();const wave=55+(t-S.lastImpact)*.35;
+  c.save();c.translate(x,y);
+  c.strokeStyle='rgba(168,85,247,.8)';c.lineWidth=4;c.shadowColor='#a855f7';c.shadowBlur=38;
+  c.beginPath();c.arc(0,0,wave,0,Math.PI*2);c.stroke();
+  c.strokeStyle='rgba(168,85,247,.28)';c.lineWidth=1.5;
+  c.beginPath();c.arc(0,0,wave*1.35,0,Math.PI*2);c.stroke();
+  c.restore();
+}
+
+function drawVoidStep(c,x,y){
+  c.save();c.translate(x,y);c.shadowColor='#22d3ee';c.shadowBlur=24;
+  for(let i=0;i<3;i++){
+    c.beginPath();c.arc(0,0,40+i*22,0,Math.PI*2);
+    c.strokeStyle=i===0?'rgba(255,255,255,.78)':i===1?'rgba(34,211,238,.5)':'rgba(59,130,246,.3)';
+    c.lineWidth=2.5-i*.6;c.stroke();
+  }
+  c.restore();
+}
+
+function drawCrossedGlow(c,hand,w,h){
+  const iT={x:hand[8].x*w,y:hand[8].y*h};
+  const mT={x:hand[12].x*w,y:hand[12].y*h};
+  c.save();
+  c.shadowColor='#fff';c.shadowBlur=44;c.strokeStyle='rgba(255,255,255,.9)';c.lineWidth=4;
+  c.beginPath();c.moveTo(iT.x,iT.y);c.lineTo(mT.x,mT.y);c.stroke();
+  [iT,mT].forEach(p=>{
+    const g=c.createRadialGradient(p.x,p.y,0,p.x,p.y,26);
+    g.addColorStop(0,'rgba(255,255,255,.55)');g.addColorStop(1,'rgba(168,85,247,0)');
+    c.fillStyle=g;c.beginPath();c.arc(p.x,p.y,26,0,Math.PI*2);c.fill();
+  });
+  c.restore();
+  spawn(iT.x,iT.y,'aura-p',2);spawn(mT.x,mT.y,'aura-p',2);
+}
+
+function drawShockwave(c){
+  if(S.shockwave<=.01)return;
+  const w=cvFx.width,h=cvFx.height;
+  c.save();c.translate(w/2,h/2);
+  const r=50+(1-S.shockwave)*Math.max(w,h)*.72;
+  c.strokeStyle=`rgba(255,255,255,${S.shockwave*.85})`;c.lineWidth=6;c.shadowColor='#fff';c.shadowBlur=30;
+  c.beginPath();c.arc(0,0,r,0,Math.PI*2);c.stroke();
+  c.strokeStyle=`${S.shockCol}${Math.floor(S.shockwave*180).toString(16).padStart(2,'0')}`;
+  c.lineWidth=2;c.beginPath();c.arc(0,0,r*.68,0,Math.PI*2);c.stroke();
+  c.restore();S.shockwave*=.88;
+}
+
+function drawDomainBg(){
+  const w=cvDom.width,h=cvDom.height,t=performance.now()*.001;
+  cDom.fillStyle='rgba(1,1,9,.97)';cDom.fillRect(0,0,w,h);
+  if(!S.domStars.length)for(let i=0;i<220;i++)S.domStars.push({x:rnd(-900,900),y:rnd(-700,700),z:rnd(80,2000)});
+  const cx=w/2,cy=h/2;
+  S.domStars.forEach(s=>{
+    s.z-=24;if(s.z<=1){s.z=2000;s.x=rnd(-900,900);s.y=rnd(-700,700);}
+    const k=420/s.z,pk=420/(s.z+24);
+    const px=s.x*k+cx,py=s.y*k+cy;
+    const tx=s.x*pk+cx,ty=s.y*pk+cy;
+    if(px>0&&px<w&&py>0&&py<h){
+      const sp=clamp((2000-s.z)/2000,0,1);
+      cDom.globalAlpha=sp*.88;cDom.strokeStyle='rgba(255,255,255,.88)';cDom.lineWidth=Math.max(.4,k*1.9);
+      cDom.shadowBlur=0;cDom.beginPath();cDom.moveTo(tx,ty);cDom.lineTo(px,py);cDom.stroke();
+    }
+  });
+  cDom.globalAlpha=1;
+  // pulse rings
+  for(let i=0;i<5;i++){
+    const r=55+i*65+((t*28+i*38)%305);const a=1-r/330;if(a<=0)continue;
+    cDom.save();cDom.translate(cx,cy);
+    cDom.strokeStyle=`rgba(168,85,247,${a*.3})`;cDom.shadowColor='#a855f7';cDom.shadowBlur=22;cDom.lineWidth=1.4;
+    cDom.beginPath();cDom.arc(0,0,r,0,Math.PI*2);cDom.stroke();cDom.restore();
+  }
+}
+
+// ─── GESTURE DETECTION ────────────────────────────────
+function fingerExt(h){
+  if(!h)return null;
+  const tips=[8,12,16,20],pips=[6,10,14,18];
+  const ext=tips.map((t,i)=>h[t].y<h[pips[i]].y);
+  return{index:ext[0],middle:ext[1],ring:ext[2],pinky:ext[3],ext};
+}
+
+function isCrossed(h){
+  if(!h)return false;
+  const f=fingerExt(h);if(!f)return false;
+  if(!f.index||!f.middle||f.ring||f.pinky)return false;
+  const d=dist2(h[8],h[12]);
+  const cx=Math.abs(h[8].x-h[12].x)<0.055;
+  const cy2=Math.abs(h[8].y-h[12].y)<0.075;
+  return(cx&&cy2)||d<0.065;
+}
+
+function detectGesture(results){
+  const l=results.leftHandLandmarks,r=results.rightHandLandmarks;
+  let g='IDLE',conf=1;
+
+  if(isCrossed(l)||isCrossed(r)){g='DOMAIN';conf=.95;}
+  else if(l&&r){
+    const lf=fingerExt(l),rf=fingerExt(r);
+    const wd=dist2(l[0],r[0]);
+    const loL=lf.index&&lf.middle&&lf.ring&&lf.pinky;
+    const loR=rf.index&&rf.middle&&rf.ring&&rf.pinky;
+    const lcL=!lf.index&&!lf.middle&&!lf.ring&&!lf.pinky;
+    const lcR=!rf.index&&!rf.middle&&!rf.ring&&!rf.pinky;
+    const td=dist2(l[8],r[8]);
+    if(loL&&loR&&wd<.2){g='INFINITY';conf=.9;}
+    else if(lcL&&lcR&&wd<.2){g='VOID_STEP';conf=.88;}
+    else if(td<0.1){g='PURPLE';conf=.85;}
+    else g='AURA';
+  }
+  else if(l||r){
+    const h=l||r,f=fingerExt(h);
+    const wrist=h[0];
+    const idxUp=f.index&&dist2(h[8],wrist)>0.13;
+    if(idxUp&&!f.middle&&!f.ring&&!f.pinky){g='RED';conf=.9;}
+    else if(dist2(h[4],h[8])<0.046){g='BLUE';conf=.92;}
+    else g='AURA';
+  }
+  else if(results.poseLandmarks){g='AURA';conf=.7;}
+
+  if(dbgOn){
+    const h=l||r;
+    DBG.g.textContent=`Gesture: ${g}`;DBG.c.textContent=`Conf: ${(conf*100).toFixed(0)}%`;
+    DBG.hn.textContent=`Hands: ${l?'L ':''}${r?'R':''}`;
+    if(h)DBG.e.textContent=`Ext: ${fingerExt(h)?.ext.map(e=>e?'1':'0').join('')||'----'}`;
+    DBG.m.textContent=`Mode: ${S.mode}`;
+  }
+  return{gesture:g,conf};
+}
+
+// ─── HOLD SYSTEM ──────────────────────────────────────
+const INSTANT_MODES=['IDLE','AURA'];
+
+function processHold(raw,tp){
+  const now=performance.now();
+  if(raw!==S.holdCandidate){
+    S.holdCandidate=raw;S.holdStart=now;
+    UI.holdWrap.style.display='none';UI.holdBar.style.width='0%';
+  }
+  if(INSTANT_MODES.includes(raw)){if(raw!==S.mode)applyMode(raw,tp);return;}
+  const elapsed=now-S.holdStart,pct=Math.min(elapsed/S.HOLD_MS,1);
+  if(pct<1&&raw!==S.mode){
+    UI.holdWrap.style.display='block';UI.holdBar.style.width=(pct*100)+'%';
+    UI.holdBar.style.background=gColor(raw);UI.holdBar.style.boxShadow=`0 0 8px ${gColor(raw)}`;
+  }
+  if(dbgOn)DBG.h.textContent=`Hold: ${elapsed.toFixed(0)}/${S.HOLD_MS}ms`;
+  if(pct>=1){UI.holdWrap.style.display='none';UI.holdBar.style.width='0%';if(raw!==S.mode)applyMode(raw,tp);}
+}
+
+// ─── MODE APPLICATION ─────────────────────────────────
+function applyMode(m,tp){
+  S.mode=m;UI.mode.textContent=m;AU.stopAll();
+  document.body.classList.remove('quake');
+  cvDom.style.opacity='0';
+
+  const cx=cvMain.width/2,cy=cvMain.height/2;
+  const tx=tp?tp.x:cx,ty=tp?tp.y:cy;
+
+  log(`▶ ${m}`,gColor(m));
+
+  switch(m){
+    case 'IDLE':
+      setTitle('SYSTEM IDLE','#475569','Stand in frame to awaken the Limitless');
+      UI.energy.style.width='0%';resetCharges();break;
+
+    case 'AURA':
+      setTitle('CURSED ENERGY OVERFLOW','#22d3ee','Limitless active — body nodes radiating',true);
+      UI.energy.style.width='35%';
+      AU.amb.volume=.3;AU.amb.play().catch(()=>{});break;
+
+    case 'BLUE':
+      setTitle('MAXIMUM OUTPUT: BLUE','#3b82f6','Gravity singularity — attracting everything',true,'glitch');
+      UI.energy.style.width='100%';S.bluePulse=0;
+      AU.play('blue',.9);log('Lapse: Blue — gravity well forming','#93c5fd');break;
+
+    case 'RED':
+      setTitle('REVERSAL: RED','#ef4444','Cursed energy reversed — maximum repulsion',true);
+      UI.energy.style.width='90%';S.redOrbR=0;document.body.classList.add('quake');
+      AU.play('red',.85);log('Reversal: Red — repulsion field active','#fca5a5');break;
+
+    case 'PURPLE':
+      setTitle('HOLLOW: PURPLE','#a855f7','Imaginary mass erasure — maximum destruction',true);
+      UI.energy.style.width='100%';UI.purple.textContent='ERASE';document.body.classList.add('quake');
+      AU.play('purple',.9);
+      triggerImpact(tx,ty,'purple');spawnCracks(tx,ty,6);
+      spawn(tx,ty,'purple',55);spawn(tx,ty,'debris',85);
+      S.shockwave=1;S.shockCol='#a855f7';
+      for(let i=0;i<6;i++)spawnLightning(rnd(0,cvFx.width),rnd(0,cvFx.height),tx,ty,'#a855f7');
+      log('Hollow Purple — imaginary mass deployed','#d8b4fe');break;
+
+    case 'INFINITY':
+      setTitle('INFINITY: ACTIVE','#22d3ee','Limitless barrier — all attacks return to zero',true);
+      UI.energy.style.width='100%';UI.blue.textContent='∞';UI.red.textContent='∞';UI.purple.textContent='∞';
+      AU.amb.volume=.42;AU.amb.play().catch(()=>{});
+      for(let i=0;i<8;i++)spawnLightning(rnd(0,cvFx.width),rnd(0,cvFx.height),cx,cy,'#22d3ee');
+      spawnRipple(cx,cy,'#22d3ee');log('Infinity — Limitless barrier active','#22d3ee');break;
+
+    case 'VOID_STEP':
+      setTitle('VOID STEP','#f1f5f9','Space-time skipped — instant teleport',true);
+      UI.energy.style.width='85%';document.body.classList.add('quake');
+      AU.amb.volume=.3;AU.amb.play().catch(()=>{});
+      triggerImpact(tx,ty,'blue');spawn(tx,ty,'white',35);spawn(tx,ty,'debris',45);
+      S.shockwave=.82;S.shockCol='#fff';spawnCracks(tx,ty,4);
+      log('Void Step — space-time skipped','#e2e8f0');break;
+
+    case 'DOMAIN':
+      setTitle('RYOIKI TENKAI','domain','Infinite Void — perception floods all senses',true);
+      UI.energy.style.width='100%';
+      document.body.style.filter='contrast(120%) brightness(115%) saturate(140%)';
+      cvDom.style.opacity='1';
+      AU.play('domain',.82);
+      spawn(cx,cy,'purple',65);spawn(cx,cy,'aura-p',45);spawn(cx,cy,'white',35);
+      S.shockwave=1;S.shockCol='#a855f7';
+      spawnCracks(cx,cy,9);
+      for(let i=0;i<10;i++)spawnLightning(rnd(0,cvFx.width),rnd(0,cvFx.height),cx,cy,'#a855f7');
+      spawnRipple(cx,cy,'#a855f7');
+      triggerImpact(cx,cy,'purple');
+      log('RYOIKI TENKAI — MUGEN. Crossed finger sign confirmed.','#e0e7ff');break;
+  }
+  if(m!=='DOMAIN')document.body.style.filter='';
+}
+
+function setTitle(text,col,desc,glow=false,extra=''){
+  const t=UI.title;
+  t.textContent=text;
+  t.className='orb'+(extra?' '+extra:'');
+  if(col==='domain'){
+    t.style.cssText='font-size:26px;font-weight:900;background:linear-gradient(90deg,#fff,#c7d2fe,#818cf8);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;text-transform:uppercase;filter:drop-shadow(0 0 18px rgba(255,255,255,.5))';
+  } else {
+    t.style.cssText=`font-size:26px;font-weight:900;color:${col};text-transform:uppercase;${glow?`text-shadow:0 0 28px ${col},0 0 56px ${col}55`:''}`;
+  }
+  UI.desc.textContent=desc;
+}
+
+function resetCharges(){
+  S.charge.blue=0;S.charge.red=0;
+  UI.blue.textContent='0%';UI.red.textContent='0%';UI.purple.textContent='LOCK';
+  UI.bBlue.style.width='0%';UI.bRed.style.width='0%';UI.bPurple.style.width='0%';
+}
+
+function triggerImpact(x,y,kind='red'){
+  const now=performance.now();if(now-S.lastImpact<280)return;S.lastImpact=now;
+  AU.play('impact',.82);
+  const col=kind==='purple'?'rgba(168,85,247,.28)':kind==='blue'?'rgba(59,130,246,.22)':'rgba(239,68,68,.24)';
+  dmgEl.style.animation='none';void dmgEl.offsetWidth;dmgEl.style.background=col;dmgEl.style.animation='dmgFlash .5s ease-out forwards';
+}
+
+function triggerBlueMax(x,y){
+  log('BLUE MAX — gravity singularity!','#93c5fd');
+  S.shockwave=1;S.shockCol='#3b82f6';
+  S.combo.blueReady=true;S.combo.blueAt=performance.now();
+  AU.play('blue',.95);
+  spawn(x,y,'blue',36);spawn(x,y,'aura',22);spawn(x,y,'debris',36);
+  spawnLightning(x,y,x+(Math.random()-.5)*200,y+(Math.random()-.5)*200,'#3b82f6');
+  spawnRipple(x,y,'#3b82f6');document.body.classList.add('quake');
+  setTimeout(()=>document.body.classList.remove('quake'),500);
+  checkCombo(x,y);
+}
+
+function triggerRedMax(x,y){
+  log('RED MAX — blast released!','#fca5a5');
+  S.shockwave=.9;S.shockCol='#ef4444';
+  S.combo.redReady=true;S.combo.redAt=performance.now();
+  triggerImpact(x,y,'red');spawn(x,y,'red',44);spawn(x,y,'debris',65);
+  spawnRipple(x,y,'#ef4444');checkCombo(x,y);
+}
+
+function checkCombo(x,y){
+  if(S.combo.blueReady&&S.combo.redReady&&Math.abs(S.combo.blueAt-S.combo.redAt)<10000){
+    S.combo.blueReady=S.combo.redReady=false;S.combo.blueAt=S.combo.redAt=0;
+    S.charge.blue=0;S.charge.red=0;
+    log('BLUE+RED COMBO → HOLLOW PURPLE!','#d8b4fe');
+    applyMode('PURPLE',{x,y});
+  }
+}
+
+// ─── MAIN DRAW ────────────────────────────────────────
+function drawFrame(results){
+  const w=cvMain.width,h=cvMain.height,cx=w/2,cy=h/2,t=performance.now();
+
+  // BG
+  const bg=cBg.createRadialGradient(cx,cy,0,cx,cy,Math.max(w,h)*.8);
+  const bgCols={DOMAIN:['#0a0020','#010108'],RED:['#120808','#040106'],BLUE:['#060c18','#020408'],PURPLE:['#0d0514','#040108'],INFINITY:['#050e12','#020608']};
+  const bc=bgCols[S.mode]||['#06080f','#010103'];
+  bg.addColorStop(0,bc[0]);bg.addColorStop(1,bc[1]);
+  cBg.fillStyle=bg;cBg.fillRect(0,0,w,h);
+
+  // Domain background
+  if(S.mode==='DOMAIN')drawDomainBg();
+
+  // Camera + vignette
+  cMain.save();
+  cMain.fillStyle='#000';cMain.fillRect(0,0,w,h);
+  cMain.translate(w,0);cMain.scale(-1,1);
+  cMain.drawImage(results.image,0,0,w,h);
+  const vg=cMain.createRadialGradient(w/2,h/2,h*.18,w/2,h/2,h*.72);
+  vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.38)');
+  cMain.fillStyle=vg;cMain.fillRect(0,0,w,h);
+  cMain.restore();
+
+  // FX canvas (mirrored for hand tracking)
+  cFx.clearRect(0,0,w,h);
+  cFx.save();cFx.translate(w,0);cFx.scale(-1,1);
+
+  // Pose
+  if(results.poseLandmarks){
+    drawConnectors(cFx,results.poseLandmarks,POSE_CONNECTIONS,{color:'rgba(34,211,238,.12)',lineWidth:1});
+    const nodes=[0,11,12,13,14,15,16,23,24,25,26];
+    nodes.forEach(i=>{
+      const n=results.poseLandmarks[i];
+      if(n&&n.visibility>.4&&Math.random()>.32){
+        const type=S.mode==='RED'?'aura-r':S.mode==='PURPLE'?'aura-p':'aura';
+        spawn(n.x*w,n.y*h,type,1);
       }
-      const starGeo = new THREE.BufferGeometry();
-      starGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-      const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xe0f2fe, size: 4.2, transparent: true }));
-      scene.add(stars);
-      domainObjs.push(stars);
+    });
+    // Six Eyes glow on face during domain
+    const nose=results.poseLandmarks[0];
+    if(nose&&S.mode==='DOMAIN'){
+      const ex=nose.x*w,ey=nose.y*h;
+      cFx.save();
+      const eg=cFx.createRadialGradient(ex,ey,0,ex,ey,65);
+      eg.addColorStop(0,'rgba(255,255,255,.2)');eg.addColorStop(.4,'rgba(168,85,247,.1)');eg.addColorStop(1,'rgba(168,85,247,0)');
+      cFx.fillStyle=eg;cFx.beginPath();cFx.arc(ex,ey,65,0,Math.PI*2);cFx.fill();
+      cFx.restore();
+      S.sixeyes=Math.min(S.sixeyes+2.5,100);
+    } else {S.sixeyes=Math.max(S.sixeyes-1.2,0);}
+    UI.sixeyes.style.width=S.sixeyes+'%';
+  }
+
+  // Hands processing
+  const processHand=(hand)=>{
+    drawConnectors(cFx,hand,HAND_CONNECTIONS,{color:'rgba(34,211,238,.38)',lineWidth:1.2});
+    const tx2=hand[8].x*w,ty2=hand[8].y*h;
+    if(S.mode==='BLUE'){
+      spawn(tx2,ty2,'blue',20);spawn(tx2,ty2,'aura',5);drawBlue(cFx,tx2,ty2,.95);
+      S.charge.blue=clamp(S.charge.blue+4.2,0,100);
+      UI.blue.textContent=`${S.charge.blue|0}%`;UI.bBlue.style.width=S.charge.blue+'%';
+      if(S.charge.blue>=100){triggerBlueMax(tx2,ty2);S.charge.blue=0;}
+    } else if(S.mode==='RED'){
+      drawRedOrb(cFx,tx2,ty2);spawn(tx2,ty2,'red',4);spawn(tx2,ty2,'aura-r',3);
+      S.charge.red=clamp(S.charge.red+3,0,100);
+      UI.red.textContent=`${S.charge.red|0}%`;UI.bRed.style.width=S.charge.red+'%';
+      if(S.charge.red>=100){triggerRedMax(tx2,ty2);S.charge.red=0;}
+    } else if(S.mode==='PURPLE'){
+      spawn(tx2,ty2,'purple',13);spawn(tx2,ty2,'aura-p',5);drawPurpleBurst(cFx,tx2,ty2);
+    } else if(S.mode==='INFINITY'){
+      spawn(tx2,ty2,'aura',3);drawInfinity(cFx,tx2,ty2,1.3,'rgba(34,211,238,.9)');
+    } else if(S.mode==='VOID_STEP'){
+      spawn(tx2,ty2,'blue',5);spawn(tx2,ty2,'aura',3);drawVoidStep(cFx,tx2,ty2);
+    } else if(S.mode==='DOMAIN'){
+      drawCrossedGlow(cFx,hand,w,h);
     }
+  };
+  if(results.leftHandLandmarks)processHand(results.leftHandLandmarks);
+  if(results.rightHandLandmarks)processHand(results.rightHandLandmarks);
 
-    function animateDomain() {
-      if (!scene) return;
-      domainObjs.forEach(obj => { if (obj.rotation) obj.rotation.y += 0.00045; });
-      renderer3D.render(scene, camera3D);
+  // Center infinity ring
+  if(S.mode!=='IDLE'){
+    const intensity=S.mode==='DOMAIN'?1.35:S.mode==='INFINITY'?1.55:S.mode==='BLUE'?1.1:.72;
+    const col=S.mode==='DOMAIN'?'rgba(168,85,247,.85)':S.mode==='RED'?'rgba(239,68,68,.75)':S.mode==='PURPLE'?'rgba(168,85,247,.9)':'rgba(34,211,238,.75)';
+    drawInfinity(cFx,cx,cy,intensity,col);
+  }
+
+  // Infinity extra rings
+  if(S.mode==='INFINITY'){
+    const pulse=1+Math.sin(t*.007)*.1;
+    cFx.save();cFx.translate(cx,cy);cFx.shadowColor='#22d3ee';cFx.shadowBlur=22;
+    for(let i=0;i<5;i++){
+      cFx.strokeStyle=`rgba(34,211,238,${.28-i*.05})`;cFx.lineWidth=1.5;
+      cFx.beginPath();cFx.arc(0,0,(95+i*30)*pulse,0,Math.PI*2);cFx.stroke();
     }
+    cFx.restore();
+    if(Math.random()>.72)spawnLightning(rnd(cx-220,cx+220),rnd(cy-220,cy+220),cx,cy,'#22d3ee');
+    spawn(cx,cy,'aura',2);
+  }
 
-    // ==================== PARTICLE SYSTEM ====================
-    class Particle {
-      constructor() { this.active = false; }
-      spawn(x, y, type, intensity = 1) {
-        this.x = x; this.y = y; this.type = type; this.active = true;
-        this.life = type === 'purple' ? 82 : 55;
-        this.vx = (Math.random() - 0.5) * 28 * intensity;
-        this.vy = (Math.random() - 0.5) * 28 * intensity - 5;
-        this.color = type === 'blue' ? '#3b82f6' : type === 'red' ? '#ef4444' : '#c026d3';
-        this.size = type === 'purple' ? 13 : 7;
-      }
-      update() {
-        if (!this.active) return;
-        this.x += this.vx; this.y += this.vy; this.vy += 0.22; this.life--;
-        if (this.life <= 0) this.active = false;
-      }
-      draw(c) {
-        if (!this.active) return;
-        const alpha = this.life / 70;
-        c.save();
-        c.globalAlpha = alpha;
-        c.shadowBlur = 55;
-        c.shadowColor = this.color;
-        c.fillStyle = this.color;
-        c.beginPath();
-        c.arc(this.x, this.y, this.size * alpha * 1.3, 0, Math.PI * 2);
-        c.fill();
-        c.restore();
-      }
-    }
+  // Blue screen tint
+  if(S.mode==='BLUE'&&S.charge.blue>72){
+    S.bluePulse=Math.min(S.bluePulse+.022,1);
+    cFx.fillStyle=`rgba(59,130,246,${.1+S.bluePulse*.18})`;cFx.fillRect(0,0,w,h);
+  } else S.bluePulse*=.94;
 
-    const particles = Array(CONFIG.MAX_PARTICLES).fill().map(() => new Particle());
+  // Red shimmer at high charge
+  if(S.mode==='RED'&&S.charge.red>65){
+    cFx.fillStyle=`rgba(239,68,68,${.06+(S.charge.red-65)*.003})`;cFx.fillRect(0,0,w,h);
+  }
 
-    function spawnParticles(x, y, type, count, int = 1) {
-      for (let i = 0; i < count; i++) {
-        const p = particles.find(p => !p.active) || new Particle();
-        p.spawn(x, y, type, int);
-      }
-    }
+  // Shockwave
+  drawShockwave(cFx);
+  cFx.restore();
 
-    // Lightning System
-    class Lightning {
-      constructor() { this.life = 0; }
-      cast(x1,y1,x2,y2,col) {
-        this.points = []; let x=x1, y=y1;
-        this.points.push({x,y});
-        for (let i = 0; i < 18; i++) {
-          x += (Math.random()-0.5)*125;
-          y += (Math.random()-0.5)*115 - 18;
-          this.points.push({x,y});
-        }
-        this.points.push({x:x2,y:y2});
-        this.color = col;
-        this.life = 32;
-      }
-      draw(c) {
-        if (this.life <= 0) return;
-        c.save();
-        c.globalAlpha = this.life/32;
-        c.strokeStyle = this.color;
-        c.lineWidth = 6.5;
-        c.shadowBlur = 60;
-        c.shadowColor = this.color;
-        c.beginPath();
-        this.points.forEach((p,i) => i===0 ? c.moveTo(p.x,p.y) : c.lineTo(p.x,p.y));
-        c.stroke();
-        c.restore();
-        this.life--;
-      }
-    }
-    const lightnings = Array(CONFIG.MAX_LIGHTNING).fill().map(() => new Lightning());
+  // Particles + effects (screen space)
+  const hh=results.leftHandLandmarks||results.rightHandLandmarks;
+  let hx=null,hy=null;
+  if(hh){hx=w-hh[8].x*w;hy=hh[8].y*h;}
+  S.particles=S.particles.filter(p=>{p.update(hx,hy);p.draw(cFx);return p.life>0&&p.alpha>.02;});
+  S.lightnings=S.lightnings.filter(l=>{l.draw(cFx);return l.life>0;});
+  S.cracks=S.cracks.filter(c=>{c.draw(cFx);return c.life>0;});
+  S.ripples=S.ripples.filter(r=>{r.draw(cFx);return r.life>0;});
 
-    function castLightning(x1,y1,x2,y2,col) {
-      const l = lightnings.find(l => l.life <= 0) || new Lightning();
-      l.cast(x1,y1,x2,y2,col);
-    }
+  // Energy
+  const em={RED:3,BLUE:3.6,PURPLE:4.2,DOMAIN:5.5,INFINITY:2.6,VOID_STEP:2.3,AURA:1,IDLE:-.8};
+  const dl=em[S.mode]||-.8;
+  if(results.poseLandmarks)S.energy=clamp(S.energy+dl,0,100);
+  else S.energy=clamp(S.energy-1.5,0,100);
+  UI.energy.style.width=S.energy+'%';
+}
 
-    // Gesture Detection
-    function detectGesture(results) {
-      const l = results.leftHandLandmarks;
-      const r = results.rightHandLandmarks;
-      if (l && r && Math.hypot(l[8].x - l[12].x, l[8].y - l[12].y) < 0.055) return 'DOMAIN';
-      if (l) {
-        if (l[8].y < l[6].y && Math.abs(l[4].x - l[8].x) < 0.06) return 'BLUE';
-        if (l[8].y < l[6].y && l[12].y > l[10].y) return 'RED';
-      }
-      return 'AURA';
-    }
+// ─── FPS ──────────────────────────────────────────────
+function tickFPS(){
+  S.fpsCount++;const now=performance.now();
+  if(now-S.fpsLast>=1000){S.fps=S.fpsCount;UI.fps.textContent=String(S.fps).padStart(2,'0');S.fpsCount=0;S.fpsLast=now;}
+}
 
-    // Voice Commands
-    function initVoice() {
-      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SR) return;
-      const rec = new SR();
-      rec.continuous = true;
-      rec.onresult = e => {
-        const txt = e.results[e.results.length-1][0].transcript.toLowerCase();
-        if (txt.includes('blue')) applyMode('BLUE');
-        if (txt.includes('red')) applyMode('RED');
-        if (txt.includes('purple')) applyMode('PURPLE');
-        if (txt.includes('domain')) applyMode('DOMAIN');
-      };
-      rec.start();
-    }
+// ─── HOLISTIC CALLBACK ────────────────────────────────
+function onResults(results){
+  tickFPS();
+  UI.body.textContent=results.poseLandmarks?'LINKED':'OFFLINE';
+  UI.body.style.color=results.poseLandmarks?'#4ade80':'#fbbf24';
+  const hasH=results.leftHandLandmarks||results.rightHandLandmarks;
+  UI.hands.textContent=hasH?'LINKED':'OFFLINE';
+  UI.hands.style.color=hasH?'#4ade80':'#fbbf24';
 
-    function applyMode(mode) {
-      currentMode = mode;
-      document.getElementById('mode-val').textContent = mode;
-      document.getElementById('title').textContent = mode === 'DOMAIN' ? 'RYOIKI TENKAI' : mode;
-      if (mode === 'DOMAIN') document.getElementById('three-container').style.opacity = '1';
-      log(`✦ ${mode} TECHNIQUE ACTIVATED ✦`, '#22d3ee');
-    }
+  const{gesture}=detectGesture(results);
+  const rh=results.rightHandLandmarks,lh=results.leftHandLandmarks;
+  let tp=null;
+  if(rh)tp={x:cvMain.width-rh[8].x*cvMain.width,y:rh[8].y*cvMain.height};
+  else if(lh)tp={x:cvMain.width-lh[8].x*cvMain.width,y:lh[8].y*cvMain.height};
 
-    function log(msg, color = '#67e8f9') {
-      const logs = document.getElementById('logs');
-      const entry = document.createElement('div');
-      entry.innerHTML = `<span class="text-slate-500">[${new Date().toLocaleTimeString()}]</span> <span style="color:${color}">${msg}</span>`;
-      logs.appendChild(entry);
-      if (logs.children.length > 48) logs.removeChild(logs.firstChild);
-      logs.scrollTop = logs.scrollHeight;
-    }
+  processHold(gesture,tp);
+  drawFrame(results);
+}
 
-    // Main Render Loop
-    let frameCount = 0, lastFPS = performance.now();
-    function onHolisticResults(results) {
-      frameCount++;
-      if (performance.now() - lastFPS > 1000) {
-        document.getElementById('fps-val').textContent = frameCount;
-        frameCount = 0;
-        lastFPS = performance.now();
-      }
+// ─── BOOT ─────────────────────────────────────────────
+// Add dmg flash keyframe
+const st=document.createElement('style');
+st.textContent='@keyframes dmgFlash{0%{opacity:0}12%{opacity:1}100%{opacity:0}}';
+document.head.appendChild(st);
 
-      ctx.bg.fillStyle = '#05070f';
-      ctx.bg.fillRect(0, 0, WIDTH, HEIGHT);
-      ctx.fx.clearRect(0, 0, WIDTH, HEIGHT);
+const holistic=new Holistic({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${f}`});
+holistic.setOptions({modelComplexity:0,smoothLandmarks:true,enableSegmentation:false,refineFaceLandmarks:false,minDetectionConfidence:.62,minTrackingConfidence:.62});
+holistic.onResults(onResults);
 
-      if (results.rightHandLandmarks || results.leftHandLandmarks) {
-        const hand = results.rightHandLandmarks || results.leftHandLandmarks;
-        const hx = WIDTH * (1 - hand[8].x);
-        const hy = HEIGHT * hand[8].y;
+document.getElementById('awaken-btn').addEventListener('click',async()=>{
+  document.getElementById('awaken-btn').style.display='none';
+  log('Holistic AI Core booting...','#4ade80');
+  AU.amb.volume=.25;try{await AU.amb.play();}catch(e){log('Audio blocked by browser.','#ef4444');}
+  const cam=new Camera(vid,{width:1280,height:720,onFrame:async()=>{await holistic.send({image:vid});}});
+  cam.start().then(()=>log('Vessel identified. Six Eyes calibrated.','#22d3ee')).catch(e=>log(`Feed error: ${e}`,'#ef4444'));
+});
 
-        const gesture = detectGesture(results);
-        if (gesture !== 'AURA' && gesture !== currentMode) applyMode(gesture);
-
-        if (currentMode === 'BLUE') { spawnParticles(hx, hy, 'blue', 28); castLightning(hx-150, hy-130, hx+130, hy+120, '#3b82f6'); }
-        if (currentMode === 'RED') spawnParticles(hx, hy, 'red', 20);
-        if (currentMode === 'PURPLE') spawnParticles(hx, hy, 'purple', 35, 1.8);
-      }
-
-      particles.forEach(p => { p.update(); p.draw(ctx.fx); });
-      lightnings.forEach(l => l.draw(ctx.fx));
-
-      energy = currentMode !== 'IDLE' ? Math.min(100, energy + CONFIG.ENERGY_GAIN) : Math.max(12, energy - 0.45);
-      sixEyes = Math.min(100, sixEyes + (currentMode !== 'IDLE' ? CONFIG.SIX_EYES_GAIN : -0.7));
-
-      document.getElementById('ce-val').textContent = Math.floor(energy) + '%';
-      document.getElementById('sixeyes-val').textContent = Math.floor(sixEyes) + '%';
-    }
-
-    // SINGLE BUTTON — SIX EYES + CAMERA
-    async function activateSixEyesAndCamera() {
-      const btn = document.getElementById('awaken-btn');
-      btn.innerHTML = '⟳ ACTIVATING SIX EYES...';
-      btn.disabled = true;
-
-      log("Six Eyes Awakening Sequence Initiated...", "#22d3ee");
-
-      try {
-        initMindBlowingDomain();
-        initVoice();
-
-        holistic = new Holistic({ locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${f}` });
-        holistic.setOptions({ modelComplexity: 1, smoothLandmarks: true, minDetectionConfidence: 0.73 });
-        holistic.onResults(onHolisticResults);
-
-        const video = document.createElement('video');
-        video.style.display = 'none';
-        document.body.appendChild(video);
-
-        camera = new Camera(video, {
-          width: 1280,
-          height: 720,
-          onFrame: async () => { if (holistic) await holistic.send({ image: video }); }
-        });
-
-        await camera.start();
-
-        isAwakened = true;
-        btn.style.display = 'none';
-        log("✅ CAMERA + SIX EYES FULLY AWAKENED", "#4ade80");
-        log("All systems online. Unlimited power.", "#a855f7");
-        applyMode('AURA');
-
-      } catch (err) {
-        log("Camera Error: " + err.message, "#ef4444");
-        btn.innerHTML = "RETRY AWAKEN";
-        btn.disabled = false;
-      }
-    }
-
-    // Button Click
-    document.getElementById('awaken-btn').addEventListener('click', activateSixEyesAndCamera);
-
-    // Boot Logs
-    log("LIMITLESS v10.5 CELESTIAL INITIALIZED", "#c026d3");
-    log("Mind-blowing 3D Domain + Particle System Ready", "#67e8f9");
-    log("Press the button to awaken Six Eyes and start camera", "#67e8f9");
-  </script>
+applyMode('IDLE',null);
+</script>
 </body>
 </html>
