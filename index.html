@@ -1,1068 +1,868 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Gojo Satoru — Limitless Engine Optimized</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Gojo Satoru — Limitless v8 ULTRA</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/holistic/holistic.js" crossorigin="anonymous"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&family=Share+Tech+Mono&display=swap');
-
-    :root {
-      --bg: #05060a;
-      --cyan: #22d3ee;
-      --blue: #3b82f6;
-      --red: #ef4444;
-      --purple: #a855f7;
-      --white: #e5f6ff;
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+    :root{--cyan:#22d3ee;--blue:#3b82f6;--red:#ef4444;--purple:#a855f7}
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Share Tech Mono',monospace;color:#fff;touch-action:manipulation;user-select:none}
+    canvas{position:absolute;inset:0}
+    #cv-bg{z-index:1}#cv-dom{z-index:2;opacity:0;transition:opacity .7s}
+    #cv-main{z-index:3}#cv-fx{z-index:4;pointer-events:none}
+    #ui{position:absolute;inset:0;z-index:10;pointer-events:none;display:flex;flex-direction:column;justify-content:space-between;padding:14px}
+    .hud{background:rgba(0,0,0,.78);border:1px solid rgba(34,211,238,.28);backdrop-filter:blur(18px);border-radius:16px;box-shadow:0 0 40px rgba(34,211,238,.08),inset 0 0 24px rgba(34,211,238,.03)}
+    .orb{font-family:'Orbitron',sans-serif;letter-spacing:.14em}
+    @keyframes glitch{
+      0%{text-shadow:2px 0 #ff3355,-2px 0 #2dd4ff;transform:translate(0,0) skewX(0deg)}
+      20%{text-shadow:-3px 0 #ff3355,3px 0 #2dd4ff;transform:translate(-1px,.5px) skewX(-1.2deg)}
+      40%{text-shadow:3px 0 #ff3355,-3px 0 #2dd4ff;transform:translate(1px,-.5px) skewX(1.2deg)}
+      60%{text-shadow:-1px 0 #ff3355,1px 0 #2dd4ff;transform:translate(.5px,0)}
+      80%,100%{text-shadow:2px 0 #ff3355,-2px 0 #2dd4ff;transform:translate(0,0)}
     }
-
-    * { box-sizing: border-box; }
-    html, body {
-      margin: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: radial-gradient(circle at center, #0a1020 0%, #04050a 50%, #010103 100%);
-      font-family: 'Share Tech Mono', monospace;
-      color: white;
+    .glitch{animation:glitch 1.6s infinite}
+    @keyframes quake{
+      0%,100%{transform:translate(0,0)}10%{transform:translate(-5px,4px)}
+      20%{transform:translate(5px,-4px)}30%{transform:translate(-4px,-5px)}
+      40%{transform:translate(4px,3px)}50%{transform:translate(-3px,5px)}
+      60%{transform:translate(3px,-3px)}70%{transform:translate(-4px,2px)}
+      80%{transform:translate(4px,-2px)}90%{transform:translate(-2px,4px)}
     }
-
-    body { touch-action: manipulation; }
-
-    .six-eyes-active {
-      filter: contrast(120%) brightness(110%) saturate(135%);
-    }
-
-    .glitch-text {
-      position: relative;
-      animation: glitch 1.2s infinite linear alternate-reverse;
-    }
-    @keyframes glitch {
-      0% { text-shadow: 2px 0 #ff3355, -2px 0 #2dd4ff; transform: translate(0,0); }
-      100% { text-shadow: -2px 0 #ff3355, 2px 0 #2dd4ff; transform: translate(0.5px,-0.5px); }
-    }
-
-    .quake-triggered { animation: quake 0.08s linear infinite; }
-    @keyframes quake {
-      0% { transform: translate(0,0); }
-      25% { transform: translate(-4px, 3px); }
-      50% { transform: translate(4px, -3px); }
-      75% { transform: translate(-3px, -4px); }
-      100% { transform: translate(0,0); }
-    }
-
-    .damage-flash-active {
-      animation: damageFlash 0.45s ease-out forwards;
-    }
-    @keyframes damageFlash {
-      0% { opacity: 0; transform: scale(1); }
-      12% { opacity: 1; transform: scale(1.02); background: rgba(255, 50, 60, 0.22); }
-      100% { opacity: 0; transform: scale(1); background: transparent; }
-    }
-
-    .hud-panel {
-      background: rgba(0,0,0,0.72);
-      border: 1px solid rgba(34,211,238,0.32);
-      backdrop-filter: blur(12px);
-      box-shadow: 0 0 30px rgba(34,211,238,0.12);
-    }
-
-    .card-title {
-      font-family: 'Orbitron', sans-serif;
-      letter-spacing: 0.18em;
-    }
-
-    ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-track { background: rgba(0,0,0,0.7); }
-    ::-webkit-scrollbar-thumb { background: rgba(34,211,238,0.8); border-radius: 999px; }
-
-    canvas { image-rendering: auto; }
+    .quake{animation:quake .09s linear infinite}
+    @keyframes breathe{0%,100%{opacity:.7;transform:scale(1)}50%{opacity:1;transform:scale(1.06)}}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    @keyframes spinR{to{transform:rotate(-360deg)}}
+    @keyframes shimmer{0%{background-position:200% center}100%{background-position:-200% center}}
+    .shimmer{background:linear-gradient(90deg,#22d3ee,#3b82f6,#a855f7,#22d3ee);background-size:200% auto;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 3s linear infinite}
+    @keyframes scanline{0%{top:-8%}100%{top:108%}}
+    #scanline{position:absolute;left:0;width:100%;height:2px;background:linear-gradient(90deg,transparent,rgba(34,211,238,.18),transparent);z-index:6;pointer-events:none;animation:scanline 4s linear infinite}
+    #dmg-overlay{position:absolute;inset:0;z-index:9;pointer-events:none;opacity:0}
+    @keyframes dmgFlash{0%{opacity:0}12%{opacity:1}100%{opacity:0}}
+    #hold-bar-wrap{height:3px;border-radius:999px;background:rgba(255,255,255,.08);display:none;overflow:hidden;margin-top:8px}
+    #hold-bar{height:100%;width:0%;transition:width .05s linear;border-radius:999px}
+    .dbg{position:absolute;top:50%;right:14px;transform:translateY(-50%);z-index:12;width:170px;font-size:9px;padding:10px;display:none;pointer-events:none;letter-spacing:.05em}
   </style>
 </head>
-<body class="relative select-none">
-  <!-- Audio -->
-  <audio id="audio-ambient" src="aura.mp3" loop preload="auto"></audio>
-  <audio id="audio-blue" src="blue_lapse.mp3" preload="auto"></audio>
-  <audio id="audio-red" src="red_reversal.mp3" preload="auto"></audio>
-  <audio id="audio-purple" src="hollow_purple.mp3" preload="auto"></audio>
-  <audio id="audio-domain" src="domain_expansion.mp3" preload="auto"></audio>
-  <audio id="audio-impact" src="damage.mp3" preload="auto"></audio>
+<body>
+<audio id="au-amb" src="aura.mp3" loop preload="auto"></audio>
+<audio id="au-blue" src="blue_lapse.mp3" preload="auto"></audio>
+<audio id="au-red" src="red_reversal.mp3" preload="auto"></audio>
+<audio id="au-purple" src="hollow_purple.mp3" preload="auto"></audio>
+<audio id="au-domain" src="domain_expansion.mp3" preload="auto"></audio>
+<audio id="au-impact" src="damage.mp3" preload="auto"></audio>
+<video id="vid" autoplay playsinline style="display:none"></video>
 
-  <video class="input_video hidden" autoplay playsinline></video>
+<div id="scanline"></div>
+<canvas id="cv-bg"></canvas>
+<canvas id="cv-dom"></canvas>
+<canvas id="cv-main"></canvas>
+<canvas id="cv-fx"></canvas>
+<div id="dmg-overlay"></div>
 
-  <canvas id="domain-canvas" class="absolute inset-0 z-0 opacity-0 transition-opacity duration-500"></canvas>
-  <canvas id="main-canvas" class="absolute inset-0 z-10"></canvas>
-  <div id="damage-overlay" class="absolute inset-0 z-20 pointer-events-none opacity-0 mix-blend-screen"></div>
+<!-- Debug -->
+<div class="dbg hud orb" id="dbg-panel">
+  <div style="color:#22d3ee;margin-bottom:6px;font-size:10px">◈ DEBUG</div>
+  <div id="d-gest" style="color:#fbbf24">Gesture: —</div>
+  <div id="d-conf" style="color:#34d399">Confidence: —</div>
+  <div id="d-hold" style="color:#a855f7">Hold: 0ms</div>
+  <div id="d-hands" style="color:#94a3b8">Hands: —</div>
+  <div id="d-ext" style="color:#64748b">Ext: ——</div>
+  <hr style="border-color:rgba(34,211,238,.2);margin:5px 0">
+  <div id="d-mode" style="color:#22d3ee">Mode: IDLE</div>
+</div>
 
-  <div class="absolute inset-0 z-30 pointer-events-none flex flex-col justify-between p-4 md:p-6">
-    <div class="flex items-start justify-between gap-4">
-      <div class="hud-panel rounded-2xl p-4 md:p-5 w-[18rem] md:w-[21rem]">
-        <div class="card-title text-xl md:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-blue-400 to-indigo-500">
-          GOJO SATORU <span class="text-white/70 text-xs align-top">v7</span>
-        </div>
-        <div class="grid grid-cols-2 gap-x-3 gap-y-2 mt-4 text-[10px] md:text-[11px] uppercase tracking-[0.2em] text-slate-300">
-          <div>CE Output:</div><div id="hud-ce" class="text-right text-cyan-300 font-bold">∞</div>
-          <div>FPS Render:</div><div id="hud-fps" class="text-right text-green-400 font-bold">00</div>
-          <div>Body Link:</div><div id="hud-body" class="text-right text-amber-300 font-bold">OFFLINE</div>
-          <div>Hand Matrix:</div><div id="hud-hands" class="text-right text-amber-300 font-bold">OFFLINE</div>
-        </div>
-        <div class="mt-4">
-          <div class="text-[10px] text-cyan-300 uppercase tracking-[0.25em] mb-1">Cursed Energy</div>
-          <div class="h-2.5 rounded-full bg-slate-900 overflow-hidden border border-cyan-950">
-            <div id="hud-energy" class="h-full w-0 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 shadow-[0_0_16px_rgba(34,211,238,0.55)] transition-all duration-200"></div>
-          </div>
+<div id="ui">
+  <!-- TOP -->
+  <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">
+    <!-- LEFT HUD -->
+    <div class="hud" style="padding:14px;min-width:210px">
+      <div class="orb" style="font-size:18px;font-weight:900"><span class="shimmer">GOJO SATORU</span> <span style="color:rgba(255,255,255,.35);font-size:8px;vertical-align:super">v8</span></div>
+      <div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:3px 8px;font-size:9px;text-transform:uppercase;letter-spacing:.15em;color:#64748b">
+        <span>CE</span><span id="h-ce" style="text-align:right;color:#22d3ee;font-weight:bold">∞</span>
+        <span>FPS</span><span id="h-fps" style="text-align:right;color:#4ade80;font-weight:bold">--</span>
+        <span>Body</span><span id="h-body" style="text-align:right;color:#fbbf24;font-weight:bold">OFFLINE</span>
+        <span>Hands</span><span id="h-hands" style="text-align:right;color:#fbbf24;font-weight:bold">OFFLINE</span>
+        <span>Mode</span><span id="h-mode" style="text-align:right;color:#22d3ee;font-weight:bold">IDLE</span>
+      </div>
+      <!-- CE bar -->
+      <div style="margin-top:8px">
+        <div style="font-size:8px;color:#22d3ee;text-transform:uppercase;letter-spacing:.2em;margin-bottom:3px">Cursed Energy</div>
+        <div style="height:7px;border-radius:999px;background:rgba(0,0,0,.6);border:1px solid rgba(34,211,238,.18);overflow:hidden">
+          <div id="h-energy" style="height:100%;width:0%;background:linear-gradient(90deg,#22d3ee,#3b82f6,#a855f7);transition:width .15s;box-shadow:0 0 10px rgba(34,211,238,.5)"></div>
         </div>
       </div>
-
-      <div class="hud-panel rounded-2xl p-4 md:p-5 w-[18rem] md:w-[21rem] h-[15rem] md:h-[16rem] flex flex-col">
-        <div class="text-xs uppercase tracking-[0.25em] text-cyan-300 border-b border-cyan-950 pb-2 mb-2 flex items-center justify-between">
-          <span>Soul Telemetry</span>
-          <span class="flex items-center gap-2 text-red-400 animate-pulse"><span class="w-2 h-2 rounded-full bg-red-500"></span> LIVE</span>
+      <!-- Six Eyes bar -->
+      <div style="margin-top:6px">
+        <div style="font-size:8px;color:#a855f7;text-transform:uppercase;letter-spacing:.2em;margin-bottom:3px">Six Eyes</div>
+        <div style="height:4px;border-radius:999px;background:rgba(0,0,0,.6);border:1px solid rgba(168,85,247,.18);overflow:hidden">
+          <div id="h-sixeyes" style="height:100%;width:0%;background:linear-gradient(90deg,#a855f7,#7c3aed);transition:width .2s;box-shadow:0 0 8px rgba(168,85,247,.5)"></div>
         </div>
-        <div id="terminal-logs" class="flex-1 overflow-y-auto text-[11px] leading-5 text-slate-300 pr-1 space-y-1 font-mono">
-          <p class="text-cyan-400">&gt; Limitless Engine booting...</p>
-          <p class="text-slate-400">&gt; Awaiting camera and hand signature.</p>
-        </div>
+      </div>
+      <div style="margin-top:8px;pointer-events:auto">
+        <button onclick="toggleDbg()" style="font-size:8px;color:#475569;background:none;border:1px solid rgba(71,85,105,.35);border-radius:6px;padding:2px 8px;cursor:pointer;font-family:'Share Tech Mono',monospace;letter-spacing:.1em">◈ DEBUG</button>
       </div>
     </div>
-
-    <div class="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-center pointer-events-none">
-      <div class="relative w-64 h-64 rounded-full border border-cyan-500/10 flex items-center justify-center">
-        <div class="absolute inset-0 rounded-full border border-cyan-500/30 animate-spin" style="animation-duration: 14s;"></div>
-        <div class="absolute inset-6 rounded-full border border-blue-500/20 animate-spin" style="animation-duration: 22s; animation-direction: reverse;"></div>
-        <div class="absolute w-full h-px bg-cyan-500/15"></div>
-        <div class="absolute h-full w-px bg-cyan-500/15"></div>
-        <div class="w-2 h-2 rounded-full bg-cyan-300 animate-pulse shadow-[0_0_18px_rgba(34,211,238,0.9)]"></div>
+    <!-- RIGHT terminal -->
+    <div class="hud" style="padding:12px;width:230px;height:185px;display:flex;flex-direction:column">
+      <div style="font-size:8px;text-transform:uppercase;letter-spacing:.22em;color:#22d3ee;border-bottom:1px solid rgba(34,211,238,.13);padding-bottom:5px;margin-bottom:5px;display:flex;justify-content:space-between;align-items:center">
+        <span>Soul Telemetry</span>
+        <span style="display:flex;align-items:center;gap:3px;color:#ef4444;animation:breathe 1.4s ease-in-out infinite"><span style="width:5px;height:5px;border-radius:50%;background:#ef4444;display:inline-block"></span>LIVE</span>
       </div>
-    </div>
-
-    <div class="flex flex-col items-center gap-4 md:gap-6">
-      <div class="hud-panel rounded-2xl px-6 py-4 md:px-10 md:py-5 text-center max-w-[92vw]">
-        <div id="technique-title" class="card-title text-2xl md:text-4xl font-black text-slate-400 uppercase tracking-[0.18em]">SYSTEM IDLE</div>
-        <div id="technique-desc" class="mt-2 text-[11px] md:text-sm uppercase tracking-[0.2em] text-cyan-100/80 font-bold">Stand in frame to awaken the Limitless</div>
-      </div>
-
-      <!-- Gesture guide -->
-      <div class="hud-panel rounded-xl px-4 py-2 text-[10px] uppercase tracking-[0.15em] text-slate-400 text-center">
-        <span class="text-cyan-400">☞ Cross index+middle finger</span> → Ryoiki Tenkai &nbsp;|&nbsp;
-        <span class="text-blue-400">☞ Index+thumb touch</span> → Blue &nbsp;|&nbsp;
-        <span class="text-red-400">☞ Only index up</span> → Red &nbsp;|&nbsp;
-        <span class="text-purple-400">☞ Index tips close</span> → Purple
-      </div>
-
-      <div class="w-full flex items-end justify-between gap-4 pointer-events-auto px-1 md:px-4 pb-2">
-        <div class="flex gap-2 md:gap-4 flex-wrap">
-          <div class="hud-panel rounded-2xl p-3 md:p-4 min-w-[96px] md:min-w-[120px] text-center">
-            <div class="text-[9px] md:text-[10px] uppercase tracking-[0.22em] text-blue-300 font-bold">Lapse: Blue</div>
-            <div id="metric-blue" class="mt-1 text-xl md:text-2xl font-black text-white">0%</div>
-          </div>
-          <div class="hud-panel rounded-2xl p-3 md:p-4 min-w-[96px] md:min-w-[120px] text-center">
-            <div class="text-[9px] md:text-[10px] uppercase tracking-[0.22em] text-red-300 font-bold">Reversal: Red</div>
-            <div id="metric-red" class="mt-1 text-xl md:text-2xl font-black text-white">0%</div>
-          </div>
-          <div class="hud-panel rounded-2xl p-3 md:p-4 min-w-[96px] md:min-w-[120px] text-center">
-            <div class="text-[9px] md:text-[10px] uppercase tracking-[0.22em] text-purple-300 font-bold">Hollow: Purple</div>
-            <div id="metric-purple" class="mt-1 text-xl md:text-2xl font-black text-white">LOCK</div>
-          </div>
-        </div>
-
-        <button id="start-btn" class="relative overflow-hidden rounded-2xl border border-cyan-400/70 px-5 md:px-10 py-3 md:py-4 font-black uppercase tracking-[0.2em] text-sm md:text-lg bg-black/90 active:scale-95 transition-transform shadow-[0_0_30px_rgba(34,211,238,0.15)]">
-          <span class="absolute inset-0 bg-gradient-to-r from-blue-900 via-cyan-600 to-indigo-900 opacity-85"></span>
-          <span class="relative z-10">Awaken Six Eyes</span>
-        </button>
+      <div id="logs" style="flex:1;overflow-y:auto;font-size:9px;line-height:1.6;color:#94a3b8">
+        <p style="color:#22d3ee">&gt; Limitless v8 ULTRA booting...</p>
+        <p style="color:#475569">&gt; Awaiting vessel signature.</p>
       </div>
     </div>
   </div>
 
-  <script>
-    const video = document.querySelector('.input_video');
-    const mainCanvas = document.getElementById('main-canvas');
-    const domainCanvas = document.getElementById('domain-canvas');
-    const damageOverlay = document.getElementById('damage-overlay');
-    const ctx = mainCanvas.getContext('2d', { alpha: false, desynchronized: true });
-    const dctx = domainCanvas.getContext('2d', { alpha: false, desynchronized: true });
+  <!-- CENTER ornament -->
+  <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none">
+    <div style="position:relative;width:180px;height:180px;display:flex;align-items:center;justify-content:center">
+      <div style="position:absolute;inset:0;border-radius:50%;border:1px solid rgba(34,211,238,.22);animation:spin 15s linear infinite"></div>
+      <div style="position:absolute;inset:14px;border-radius:50%;border:1px solid rgba(59,130,246,.14);animation:spinR 22s linear infinite"></div>
+      <div style="position:absolute;inset:28px;border-radius:50%;border:1px solid rgba(168,85,247,.1);animation:spin 30s linear infinite"></div>
+      <div style="width:7px;height:7px;border-radius:50%;background:#22d3ee;animation:breathe 2s ease-in-out infinite;box-shadow:0 0 18px #22d3ee,0 0 36px rgba(34,211,238,.4)"></div>
+      <div style="position:absolute;width:100%;height:1px;background:linear-gradient(90deg,transparent,rgba(34,211,238,.12),transparent)"></div>
+      <div style="position:absolute;height:100%;width:1px;background:linear-gradient(180deg,transparent,rgba(34,211,238,.12),transparent)"></div>
+    </div>
+  </div>
 
-    const ui = {
-      fps: document.getElementById('hud-fps'),
-      body: document.getElementById('hud-body'),
-      hands: document.getElementById('hud-hands'),
-      energy: document.getElementById('hud-energy'),
-      logs: document.getElementById('terminal-logs'),
-      title: document.getElementById('technique-title'),
-      desc: document.getElementById('technique-desc'),
-      start: document.getElementById('start-btn'),
-      blue: document.getElementById('metric-blue'),
-      red: document.getElementById('metric-red'),
-      purple: document.getElementById('metric-purple')
-    };
+  <!-- BOTTOM -->
+  <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+    <!-- Technique title -->
+    <div class="hud" style="padding:12px 28px;text-align:center;max-width:88vw">
+      <div id="t-title" class="orb" style="font-size:26px;font-weight:900;color:#475569;text-transform:uppercase">SYSTEM IDLE</div>
+      <div id="t-desc" style="margin-top:3px;font-size:9px;text-transform:uppercase;letter-spacing:.2em;color:rgba(34,211,238,.55);font-weight:bold">Stand in frame to awaken the Limitless</div>
+      <div id="hold-bar-wrap"><div id="hold-bar"></div></div>
+    </div>
 
-    const audio = {
-      ambient: document.getElementById('audio-ambient'),
-      blue: document.getElementById('audio-blue'),
-      red: document.getElementById('audio-red'),
-      purple: document.getElementById('audio-purple'),
-      domain: document.getElementById('audio-domain'),
-      impact: document.getElementById('audio-impact'),
-      stopExcept(active) {
-        ['blue','red','purple','domain'].forEach(k => {
-          if (k !== active) {
-            const a = this[k];
-            a.pause();
-            a.currentTime = 0;
-          }
-        });
-      }
-    };
+    <!-- Gesture guide -->
+    <div class="hud" style="padding:5px 14px;font-size:8px;text-transform:uppercase;letter-spacing:.1em;color:#374151;display:flex;flex-wrap:wrap;gap:6px;justify-content:center">
+      <span><span style="color:#22d3ee">✕ Cross 2 fingers</span>=Domain</span><span style="color:#1e293b">|</span>
+      <span><span style="color:#3b82f6">○ Index+Thumb</span>=Blue</span><span style="color:#1e293b">|</span>
+      <span><span style="color:#ef4444">☝ One finger</span>=Red</span><span style="color:#1e293b">|</span>
+      <span><span style="color:#a855f7">◎ Tips close</span>=Purple</span><span style="color:#1e293b">|</span>
+      <span><span style="color:#e2e8f0">✋✋ Both open</span>=Infinity</span>
+    </div>
 
-    const state = {
-      mode: 'IDLE',
-      fpsFrameCount: 0,
-      fpsLast: performance.now(),
-      fps: 0,
-      charge: { blue: 0, red: 0, purple: 0 },
-      combo: { blueReady: false, redReady: false, blueAt: 0, redAt: 0, lastReadyAt: 0 },
-      energy: 0,
-      redOrbRadius: 0,
-      redOrbSpin: 0,
-      shockwave: 0,
-      bluePulse: 0,
-      infinityPulse: 0,
-      infinityHold: 0,
-      voidHold: 0,
-      lastBlastAt: 0,
-      particles: [],
-      starfield: [],
-      domainStars: []
-    };
+    <!-- Metrics + button -->
+    <div style="width:100%;display:flex;align-items:flex-end;justify-content:space-between;gap:8px;pointer-events:auto;padding:0 2px">
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <div class="hud" style="padding:9px 12px;min-width:82px;text-align:center">
+          <div style="font-size:7px;text-transform:uppercase;letter-spacing:.18em;color:#93c5fd;font-weight:bold">Blue</div>
+          <div id="m-blue" style="font-size:20px;font-weight:900;color:#fff;margin-top:2px">0%</div>
+          <div style="height:2px;border-radius:999px;background:rgba(59,130,246,.15);margin-top:3px;overflow:hidden"><div id="b-blue" style="height:100%;width:0%;background:#3b82f6;transition:width .1s"></div></div>
+        </div>
+        <div class="hud" style="padding:9px 12px;min-width:82px;text-align:center">
+          <div style="font-size:7px;text-transform:uppercase;letter-spacing:.18em;color:#fca5a5;font-weight:bold">Red</div>
+          <div id="m-red" style="font-size:20px;font-weight:900;color:#fff;margin-top:2px">0%</div>
+          <div style="height:2px;border-radius:999px;background:rgba(239,68,68,.15);margin-top:3px;overflow:hidden"><div id="b-red" style="height:100%;width:0%;background:#ef4444;transition:width .1s"></div></div>
+        </div>
+        <div class="hud" style="padding:9px 12px;min-width:82px;text-align:center">
+          <div style="font-size:7px;text-transform:uppercase;letter-spacing:.18em;color:#d8b4fe;font-weight:bold">Purple</div>
+          <div id="m-purple" style="font-size:20px;font-weight:900;color:#fff;margin-top:2px">LOCK</div>
+          <div style="height:2px;border-radius:999px;background:rgba(168,85,247,.15);margin-top:3px;overflow:hidden"><div id="b-purple" style="height:100%;width:0%;background:#a855f7;transition:width .1s"></div></div>
+        </div>
+      </div>
+      <button id="awaken-btn" style="position:relative;overflow:hidden;border-radius:14px;border:1px solid rgba(34,211,238,.65);padding:13px 32px;font-family:'Orbitron',sans-serif;font-weight:900;font-size:12px;letter-spacing:.18em;background:rgba(0,0,0,.92);cursor:pointer;transition:transform .12s;text-transform:uppercase;pointer-events:auto">
+        <span style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(34,211,238,.12),rgba(59,130,246,.18),rgba(168,85,247,.12));opacity:.9"></span>
+        <span style="position:relative;z-index:1;color:#fff">⚡ Awaken Six Eyes</span>
+      </button>
+    </div>
+  </div>
+</div>
 
-    function resize() {
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      mainCanvas.width = w;
-      mainCanvas.height = h;
-      domainCanvas.width = w;
-      domainCanvas.height = h;
+<script>
+// ─── CANVAS ───────────────────────────────────────────
+const vid=document.getElementById('vid');
+const cvBg=document.getElementById('cv-bg');
+const cvDom=document.getElementById('cv-dom');
+const cvMain=document.getElementById('cv-main');
+const cvFx=document.getElementById('cv-fx');
+const cBg=cvBg.getContext('2d',{alpha:false});
+const cDom=cvDom.getContext('2d',{alpha:false});
+const cMain=cvMain.getContext('2d',{alpha:false,desynchronized:true});
+const cFx=cvFx.getContext('2d',{alpha:true});
+const dmgEl=document.getElementById('dmg-overlay');
+
+function resize(){[cvBg,cvDom,cvMain,cvFx].forEach(c=>{c.width=innerWidth;c.height=innerHeight});}
+addEventListener('resize',resize);resize();
+
+// ─── AUDIO ───────────────────────────────────────────
+const AU={
+  amb:document.getElementById('au-amb'),
+  blue:document.getElementById('au-blue'),
+  red:document.getElementById('au-red'),
+  purple:document.getElementById('au-purple'),
+  domain:document.getElementById('au-domain'),
+  impact:document.getElementById('au-impact'),
+  play(k,vol=1){const a=this[k];if(!a)return;a.volume=vol;a.currentTime=0;a.play().catch(()=>{});},
+  stopAll(){['blue','red','purple','domain'].forEach(k=>{const a=this[k];if(a){a.pause();a.currentTime=0;}});}
+};
+
+// ─── UI REFS ──────────────────────────────────────────
+const UI={
+  fps:document.getElementById('h-fps'),
+  body:document.getElementById('h-body'),
+  hands:document.getElementById('h-hands'),
+  energy:document.getElementById('h-energy'),
+  sixeyes:document.getElementById('h-sixeyes'),
+  mode:document.getElementById('h-mode'),
+  logs:document.getElementById('logs'),
+  title:document.getElementById('t-title'),
+  desc:document.getElementById('t-desc'),
+  blue:document.getElementById('m-blue'),red:document.getElementById('m-red'),purple:document.getElementById('m-purple'),
+  bBlue:document.getElementById('b-blue'),bRed:document.getElementById('b-red'),bPurple:document.getElementById('b-purple'),
+  holdWrap:document.getElementById('hold-bar-wrap'),holdBar:document.getElementById('hold-bar'),
+};
+
+// ─── DEBUG ────────────────────────────────────────────
+let dbgOn=false;
+const DBG={g:document.getElementById('d-gest'),c:document.getElementById('d-conf'),h:document.getElementById('d-hold'),hn:document.getElementById('d-hands'),e:document.getElementById('d-ext'),m:document.getElementById('d-mode')};
+function toggleDbg(){dbgOn=!dbgOn;document.getElementById('dbg-panel').style.display=dbgOn?'block':'none';}
+
+// ─── STATE ────────────────────────────────────────────
+const S={
+  mode:'IDLE',energy:0,sixeyes:0,
+  charge:{blue:0,red:0},
+  combo:{blueReady:false,redReady:false,blueAt:0,redAt:0},
+  holdCandidate:'IDLE',holdStart:0,HOLD_MS:550,
+  shockwave:0,shockCol:'#fff',
+  bluePulse:0,lastImpact:0,
+  particles:[],lightnings:[],cracks:[],ripples:[],
+  domStars:[],
+  fpsCount:0,fpsLast:performance.now(),fps:0,
+  redOrbR:0,redOrbSpin:0,
+};
+
+// ─── HELPERS ──────────────────────────────────────────
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const rnd=(a,b)=>a+Math.random()*(b-a);
+const dist2=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+
+function log(msg,color='#22d3ee'){
+  const p=document.createElement('p');
+  const t=new Date().toLocaleTimeString('en-GB',{hour12:false});
+  p.style.cssText=`color:${color};font-size:9px;line-height:1.55`;
+  p.innerHTML=`<span style="color:#1e293b">[${t}]</span> &gt; ${msg}`;
+  UI.logs.appendChild(p);
+  while(UI.logs.children.length>35)UI.logs.removeChild(UI.logs.firstChild);
+  UI.logs.scrollTop=UI.logs.scrollHeight;
+}
+
+function gColor(m){return{BLUE:'#3b82f6',RED:'#ef4444',PURPLE:'#a855f7',DOMAIN:'#c7d2fe',INFINITY:'#22d3ee',VOID_STEP:'#f1f5f9'}[m]||'#22d3ee';}
+
+// ─── PARTICLE ─────────────────────────────────────────
+class P{
+  constructor(x,y,type,opts={}){
+    this.x=x;this.y=y;this.type=type;
+    this.vx=(Math.random()-.5)*4;this.vy=(Math.random()-.5)*4;
+    this.ax=0;this.ay=0;
+    this.life=1;this.maxLife=1;this.r=2;this.alpha=1;
+    this.rot=Math.random()*Math.PI*2;this.rotV=(Math.random()-.5)*.3;
+    this.col='#22d3ee';this.blur=0;this.isDebris=false;
+    switch(type){
+      case 'aura':    this.maxLife=this.life=rnd(22,44);this.r=rnd(2,6);this.vx*=.3;this.vy=-rnd(.8,2.4);this.col='#22d3ee';this.blur=this.r*3;break;
+      case 'aura-r':  this.maxLife=this.life=rnd(18,34);this.r=rnd(2,5);this.vx*=.4;this.vy=-rnd(.5,2);this.col='#ef4444';this.blur=this.r*3;break;
+      case 'aura-p':  this.maxLife=this.life=rnd(20,40);this.r=rnd(2,6);this.vx*=.3;this.vy=-rnd(.7,2.2);this.col='#a855f7';this.blur=this.r*3;break;
+      case 'blue':    this.maxLife=this.life=rnd(12,26);this.r=rnd(1.5,4);this.vx*=3;this.vy*=3;this.col='#3b82f6';this.blur=this.r*4;break;
+      case 'red':     this.maxLife=this.life=rnd(10,20);this.r=rnd(2,5);this.vx*=5;this.vy*=5;this.col='#ef4444';this.blur=this.r*4;break;
+      case 'purple':  this.maxLife=this.life=rnd(12,24);this.r=rnd(2,6);this.vx*=5.5;this.vy*=5.5;this.col='#a855f7';this.blur=this.r*5;break;
+      case 'white':   this.maxLife=this.life=rnd(8,16);this.r=rnd(1,3);this.vx*=7;this.vy*=7;this.col='#fff';this.blur=this.r*6;break;
+      case 'star':    this.maxLife=this.life=rnd(40,80);this.r=rnd(.5,2);this.vx*=.4;this.vy*=.4;this.col='#e2e8f0';this.blur=2;break;
+      case 'debris':  this.maxLife=this.life=rnd(30,58);this.r=rnd(5,14);this.vx=(Math.random()-.5)*22;this.vy=(Math.random()-.5)*22;this.isDebris=true;break;
+      case 'orb':     this.maxLife=this.life=rnd(25,50);this.r=rnd(6,16);this.vx=opts.vx||0;this.vy=opts.vy||0;this.col=opts.col||'#22d3ee';this.blur=this.r*2;break;
     }
-    window.addEventListener('resize', resize);
-    resize();
-
-    function log(msg, cls = 'text-cyan-300') {
-      const p = document.createElement('p');
-      const t = new Date().toLocaleTimeString('en-GB', { hour12: false });
-      p.className = `${cls} font-mono leading-5`;
-      p.innerHTML = `<span class="text-slate-500">[${t}]</span> &gt; ${msg}`;
-      ui.logs.appendChild(p);
-      while (ui.logs.children.length > 28) ui.logs.removeChild(ui.logs.firstChild);
-      ui.logs.scrollTop = ui.logs.scrollHeight;
+  }
+  update(tx,ty){
+    if(this.type==='aura'||this.type==='aura-r'||this.type==='aura-p'){
+      this.vx+=Math.sin((performance.now()*.008)+this.rot)*.14;this.vy-=.04;this.vx*=.97;this.vy*=.98;
+    } else if(this.type==='blue'&&tx!=null){
+      const dx=tx-this.x,dy=ty-this.y,d=Math.hypot(dx,dy);
+      if(d>6){this.ax+=dx/d*15/(d*.07);this.ay+=dy/d*15/(d*.07);}
+      this.vx*=.91;this.vy*=.91;
+    } else if(this.isDebris){this.vy+=.5;this.vx*=.987;this.vy*=.987;this.rot+=this.rotV;}
+    this.vx+=this.ax;this.vy+=this.ay;this.x+=this.vx;this.y+=this.vy;
+    this.ax=0;this.ay=0;this.life--;this.alpha=this.life/this.maxLife;
+  }
+  draw(c){
+    if(this.alpha<=.02)return;
+    c.save();c.globalAlpha=clamp(this.alpha,0,1);c.translate(this.x,this.y);
+    if(this.isDebris){
+      c.rotate(this.rot);c.shadowColor='#000';c.shadowBlur=6;
+      c.beginPath();c.moveTo(-this.r,-.4*this.r);c.lineTo(.7*this.r,-.6*this.r);c.lineTo(this.r,.5*this.r);c.lineTo(-.3*this.r,this.r);c.closePath();
+      c.fillStyle='rgba(28,30,38,.95)';c.strokeStyle='rgba(140,150,170,.75)';c.lineWidth=1;c.fill();c.stroke();
+    } else {
+      c.shadowColor=this.col;c.shadowBlur=this.blur;c.fillStyle=this.col;
+      c.beginPath();c.arc(0,0,this.r,0,Math.PI*2);c.fill();
     }
+    c.restore();
+  }
+}
 
-    function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
-    function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
+function spawn(x,y,type,n,opts={}){const MAX=1000;for(let i=0;i<n;i++){if(S.particles.length>=MAX)S.particles.shift();S.particles.push(new P(x,y,type,opts));}}
 
-    class Vector2 {
-      constructor(x=0, y=0) { this.x = x; this.y = y; }
-      add(v) { this.x += v.x; this.y += v.y; return this; }
-      mult(s) { this.x *= s; this.y *= s; return this; }
-      mag() { return Math.hypot(this.x, this.y); }
-      normalize() { const m = this.mag() || 1; this.x /= m; this.y /= m; return this; }
+// ─── LIGHTNING ────────────────────────────────────────
+class Lightning{
+  constructor(x1,y1,x2,y2,col,life=14){
+    this.x1=x1;this.y1=y1;this.x2=x2;this.y2=y2;this.col=col;this.life=life;this.maxLife=life;this.segs=this._gen();
+  }
+  _gen(){
+    let pts=[{x:this.x1,y:this.y1},{x:this.x2,y:this.y2}];
+    for(let iter=0;iter<4;iter++){
+      const n=[];
+      for(let i=0;i<pts.length-1;i++){
+        n.push(pts[i]);
+        n.push({x:(pts[i].x+pts[i+1].x)/2+(Math.random()-.5)*90,y:(pts[i].y+pts[i+1].y)/2+(Math.random()-.5)*90});
+      }
+      n.push(pts[pts.length-1]);pts=n;
     }
+    return pts;
+  }
+  draw(c){
+    const a=this.life/this.maxLife;
+    c.save();c.globalAlpha=a*.88;c.strokeStyle=this.col;c.shadowColor=this.col;c.shadowBlur=20;c.lineWidth=a*2.2;
+    c.beginPath();this.segs.forEach((p,i)=>i?c.lineTo(p.x,p.y):c.moveTo(p.x,p.y));c.stroke();
+    c.lineWidth=a*.7;c.strokeStyle='#fff';c.globalAlpha=a*.35;c.stroke();
+    c.restore();this.life--;
+  }
+}
+function spawnLightning(x1,y1,x2,y2,col){if(S.lightnings.length>24)S.lightnings.shift();S.lightnings.push(new Lightning(x1,y1,x2,y2,col));}
 
-    class Particle {
-      constructor(x, y, type) {
-        this.pos = new Vector2(x, y);
-        this.vel = new Vector2((Math.random() - 0.5) * 4, (Math.random() - 0.5) * 4);
-        this.acc = new Vector2();
-        this.type = type;
-        this.life = 1;
-        this.maxLife = 1;
-        this.r = 2;
-        this.alpha = 1;
-        this.rot = Math.random() * Math.PI * 2;
-        this.rotSpeed = (Math.random() - 0.5) * 0.2;
+// ─── VOID CRACK ───────────────────────────────────────
+class VoidCrack{
+  constructor(x,y){this.x=x;this.y=y;this.branches=this._gen(x,y,Math.random()*Math.PI*2,rnd(55,175),5);this.life=this.maxLife=rnd(40,75);}
+  _gen(x,y,angle,len,depth){
+    if(depth<=0||len<8)return[];
+    const x2=x+Math.cos(angle)*len,y2=y+Math.sin(angle)*len;
+    const s=[{x1:x,y1:y,x2,y2}];
+    const br=(rnd(1,3))|0;
+    for(let i=0;i<br;i++)s.push(...this._gen(x2,y2,angle+(Math.random()-.5)*1.5,len*rnd(.5,.75),depth-1));
+    return s;
+  }
+  draw(c){
+    const a=this.life/this.maxLife;
+    c.save();c.globalAlpha=a*.72;c.strokeStyle='rgba(168,85,247,.9)';c.shadowColor='#a855f7';c.shadowBlur=14;c.lineWidth=a*1.6;
+    this.branches.forEach(s=>{c.beginPath();c.moveTo(s.x1,s.y1);c.lineTo(s.x2,s.y2);c.stroke();});
+    c.restore();this.life--;
+  }
+}
+function spawnCracks(x,y,n=3){for(let i=0;i<n;i++)S.cracks.push(new VoidCrack(x,y));}
 
-        if (type === 'aura') {
-          this.life = this.maxLife = Math.floor(Math.random() * 28 + 18);
-          this.r = Math.random() * 5 + 2;
-          this.vel.y = -(Math.random() * 2 + 1);
-        } else if (type === 'blue') {
-          this.life = this.maxLife = Math.floor(Math.random() * 26 + 12);
-          this.r = Math.random() * 3 + 1;
-          this.vel.mult(3.5);
-        } else if (type === 'red') {
-          this.life = this.maxLife = Math.floor(Math.random() * 18 + 8);
-          this.r = Math.random() * 4 + 1;
-          this.vel.mult(5);
-        } else if (type === 'purple') {
-          this.life = this.maxLife = Math.floor(Math.random() * 20 + 10);
-          this.r = Math.random() * 5 + 2;
-          this.vel.mult(5.5);
-        } else if (type === 'debris') {
-          this.life = this.maxLife = Math.floor(Math.random() * 48 + 24);
-          this.r = Math.random() * 10 + 4;
-          this.vel = new Vector2((Math.random() - 0.5) * 18, (Math.random() - 0.5) * 18);
-        }
-      }
+// ─── RIPPLE ───────────────────────────────────────────
+class Ripple{
+  constructor(x,y,col){this.x=x;this.y=y;this.col=col;this.r=10;this.life=this.maxLife=40;}
+  draw(c){
+    const a=(this.life/this.maxLife);this.r+=6;
+    c.save();c.globalAlpha=a*.5;c.strokeStyle=this.col;c.shadowColor=this.col;c.shadowBlur=16;c.lineWidth=2;
+    c.beginPath();c.arc(this.x,this.y,this.r,0,Math.PI*2);c.stroke();
+    c.restore();this.life--;
+  }
+}
+function spawnRipple(x,y,col){S.ripples.push(new Ripple(x,y,col));}
 
-      update(target) {
-        if (this.type === 'aura') {
-          this.vel.x += Math.sin((performance.now() + this.rot) * 0.01) * 0.12;
-          this.vel.y -= 0.06;
-          this.vel.mult(0.97);
-        } else if (this.type === 'blue' && target) {
-          const dir = new Vector2(target.x - this.pos.x, target.y - this.pos.y);
-          const d = dir.mag();
-          if (d > 4) {
-            dir.normalize().mult(14 / (d * 0.08));
-            this.acc.add(dir);
-          }
-          this.vel.mult(0.92);
-        } else if (this.type === 'debris') {
-          this.vel.y += 0.45;
-          this.vel.mult(0.985);
-          this.rot += this.rotSpeed;
-        }
+// ─── DRAW HELPERS ─────────────────────────────────────
+function drawInfinity(c,x,y,intensity=1,col='#22d3ee'){
+  const t=performance.now();
+  const r=85+Math.sin(t*.004)*10+intensity*20;
+  c.save();c.translate(x,y);
+  c.beginPath();c.arc(0,0,r+24,0,Math.PI*2);
+  c.strokeStyle=`rgba(34,211,238,${.04+.035*intensity})`;c.lineWidth=2;c.stroke();
+  c.beginPath();c.arc(0,0,r,0,Math.PI*2);
+  c.strokeStyle=col;c.shadowColor=col;c.shadowBlur=34;c.lineWidth=3.5+intensity;c.stroke();
+  c.beginPath();c.arc(0,0,r*.5,0,Math.PI*2);
+  c.strokeStyle=`rgba(255,255,255,${.1+.07*intensity})`;c.shadowBlur=10;c.lineWidth=1.2;c.stroke();
+  c.rotate(t*.0022*intensity);c.setLineDash([8,18]);c.lineWidth=1;
+  c.strokeStyle=`rgba(255,255,255,${.14+.08*intensity})`;c.shadowBlur=0;
+  c.beginPath();c.arc(0,0,r*.75,0,Math.PI*2);c.stroke();
+  c.setLineDash([]);c.restore();
+}
 
-        this.vel.add(this.acc);
-        this.pos.add(this.vel);
-        this.acc.mult(0);
-        this.life--;
-        this.alpha = this.life / this.maxLife;
-      }
+function drawRedOrb(c,x,y){
+  S.redOrbR=Math.min(S.redOrbR+2,50);S.redOrbSpin+=.18;
+  c.save();c.translate(x,y);
+  const g=c.createRadialGradient(0,0,0,0,0,S.redOrbR*3.6);
+  g.addColorStop(0,'rgba(255,30,60,.92)');g.addColorStop(.4,'rgba(255,30,60,.22)');g.addColorStop(1,'rgba(255,30,60,0)');
+  c.beginPath();c.arc(0,0,S.redOrbR*3.6,0,Math.PI*2);c.fillStyle=g;c.fill();
+  c.beginPath();c.arc(0,0,S.redOrbR,0,Math.PI*2);c.fillStyle='#ff1744';c.shadowColor='#ff1744';c.shadowBlur=40;c.fill();
+  c.rotate(S.redOrbSpin);
+  c.beginPath();c.arc(0,0,S.redOrbR*.36,0,Math.PI*2);c.fillStyle='#050508';c.shadowBlur=0;c.fill();
+  c.strokeStyle='rgba(255,100,100,.45)';c.lineWidth=1.5;c.shadowColor='#ff1744';c.shadowBlur=10;c.setLineDash([6,14]);
+  c.beginPath();c.arc(0,0,S.redOrbR*1.6,0,Math.PI*2);c.stroke();c.setLineDash([]);
+  c.restore();
+}
 
-      draw(c) {
-        if (this.alpha <= 0) return;
-        c.save();
-        c.translate(this.pos.x, this.pos.y);
-        c.globalAlpha = clamp(this.alpha, 0, 1);
+function drawBlue(c,x,y,scale=1){
+  const t=performance.now();const pulse=1+Math.sin(t*.012)*.1;const r=20*scale*pulse;
+  c.save();c.translate(x,y);
+  const og=c.createRadialGradient(0,0,0,0,0,r*9);
+  og.addColorStop(0,'rgba(255,255,255,.18)');og.addColorStop(.15,'rgba(34,211,238,.3)');og.addColorStop(.4,'rgba(59,130,246,.15)');og.addColorStop(1,'rgba(59,130,246,0)');
+  c.fillStyle=og;c.beginPath();c.arc(0,0,r*9,0,Math.PI*2);c.fill();
+  c.shadowColor='#22d3ee';c.shadowBlur=34;c.strokeStyle='rgba(34,211,238,.95)';c.lineWidth=3;
+  c.beginPath();c.arc(0,0,r*2.5,0,Math.PI*2);c.stroke();
+  c.rotate(t*.004);c.strokeStyle='rgba(59,130,246,.45)';c.lineWidth=1;c.setLineDash([5,12]);
+  c.beginPath();c.arc(0,0,r*4,0,Math.PI*2);c.stroke();c.setLineDash([]);
+  c.fillStyle='#fff';c.shadowBlur=26;c.beginPath();c.arc(0,0,r*.5,0,Math.PI*2);c.fill();
+  c.restore();
+}
 
-        if (this.type === 'debris') {
-          c.rotate(this.rot);
-          c.beginPath();
-          c.moveTo(-this.r, -this.r * 0.4);
-          c.lineTo(this.r * 0.7, -this.r * 0.6);
-          c.lineTo(this.r, this.r * 0.5);
-          c.lineTo(-this.r * 0.3, this.r);
-          c.closePath();
-          c.fillStyle = 'rgba(35, 35, 42, 0.95)';
-          c.strokeStyle = 'rgba(135, 145, 165, 0.7)';
-          c.shadowColor = '#000';
-          c.shadowBlur = 8;
-          c.lineWidth = 1;
-          c.fill();
-          c.stroke();
-        } else {
-          c.beginPath();
-          c.arc(0, 0, this.r, 0, Math.PI * 2);
-          if (this.type === 'aura') {
-            c.fillStyle = 'rgba(34, 211, 238, 0.9)';
-            c.shadowColor = '#22d3ee';
-            c.shadowBlur = this.r * 3;
-          } else if (this.type === 'blue') {
-            c.fillStyle = 'rgba(59, 130, 246, 1)';
-            c.shadowColor = '#3b82f6';
-            c.shadowBlur = this.r * 4;
-          } else if (this.type === 'red') {
-            c.fillStyle = 'rgba(239, 68, 68, 1)';
-            c.shadowColor = '#ef4444';
-            c.shadowBlur = this.r * 4;
-          } else if (this.type === 'purple') {
-            c.fillStyle = 'rgba(168, 85, 247, 1)';
-            c.shadowColor = '#a855f7';
-            c.shadowBlur = this.r * 4;
-          }
-          c.fill();
-        }
-        c.restore();
-      }
+function drawPurpleBurst(c,x,y){
+  const t=performance.now();const wave=55+(t-S.lastImpact)*.35;
+  c.save();c.translate(x,y);
+  c.strokeStyle='rgba(168,85,247,.8)';c.lineWidth=4;c.shadowColor='#a855f7';c.shadowBlur=38;
+  c.beginPath();c.arc(0,0,wave,0,Math.PI*2);c.stroke();
+  c.strokeStyle='rgba(168,85,247,.28)';c.lineWidth=1.5;
+  c.beginPath();c.arc(0,0,wave*1.35,0,Math.PI*2);c.stroke();
+  c.restore();
+}
+
+function drawVoidStep(c,x,y){
+  c.save();c.translate(x,y);c.shadowColor='#22d3ee';c.shadowBlur=24;
+  for(let i=0;i<3;i++){
+    c.beginPath();c.arc(0,0,40+i*22,0,Math.PI*2);
+    c.strokeStyle=i===0?'rgba(255,255,255,.78)':i===1?'rgba(34,211,238,.5)':'rgba(59,130,246,.3)';
+    c.lineWidth=2.5-i*.6;c.stroke();
+  }
+  c.restore();
+}
+
+function drawCrossedGlow(c,hand,w,h){
+  const iT={x:hand[8].x*w,y:hand[8].y*h};
+  const mT={x:hand[12].x*w,y:hand[12].y*h};
+  c.save();
+  c.shadowColor='#fff';c.shadowBlur=44;c.strokeStyle='rgba(255,255,255,.9)';c.lineWidth=4;
+  c.beginPath();c.moveTo(iT.x,iT.y);c.lineTo(mT.x,mT.y);c.stroke();
+  [iT,mT].forEach(p=>{
+    const g=c.createRadialGradient(p.x,p.y,0,p.x,p.y,26);
+    g.addColorStop(0,'rgba(255,255,255,.55)');g.addColorStop(1,'rgba(168,85,247,0)');
+    c.fillStyle=g;c.beginPath();c.arc(p.x,p.y,26,0,Math.PI*2);c.fill();
+  });
+  c.restore();
+  spawn(iT.x,iT.y,'aura-p',2);spawn(mT.x,mT.y,'aura-p',2);
+}
+
+function drawShockwave(c){
+  if(S.shockwave<=.01)return;
+  const w=cvFx.width,h=cvFx.height;
+  c.save();c.translate(w/2,h/2);
+  const r=50+(1-S.shockwave)*Math.max(w,h)*.72;
+  c.strokeStyle=`rgba(255,255,255,${S.shockwave*.85})`;c.lineWidth=6;c.shadowColor='#fff';c.shadowBlur=30;
+  c.beginPath();c.arc(0,0,r,0,Math.PI*2);c.stroke();
+  c.strokeStyle=`${S.shockCol}${Math.floor(S.shockwave*180).toString(16).padStart(2,'0')}`;
+  c.lineWidth=2;c.beginPath();c.arc(0,0,r*.68,0,Math.PI*2);c.stroke();
+  c.restore();S.shockwave*=.88;
+}
+
+function drawDomainBg(){
+  const w=cvDom.width,h=cvDom.height,t=performance.now()*.001;
+  cDom.fillStyle='rgba(1,1,9,.97)';cDom.fillRect(0,0,w,h);
+  if(!S.domStars.length)for(let i=0;i<220;i++)S.domStars.push({x:rnd(-900,900),y:rnd(-700,700),z:rnd(80,2000)});
+  const cx=w/2,cy=h/2;
+  S.domStars.forEach(s=>{
+    s.z-=24;if(s.z<=1){s.z=2000;s.x=rnd(-900,900);s.y=rnd(-700,700);}
+    const k=420/s.z,pk=420/(s.z+24);
+    const px=s.x*k+cx,py=s.y*k+cy;
+    const tx=s.x*pk+cx,ty=s.y*pk+cy;
+    if(px>0&&px<w&&py>0&&py<h){
+      const sp=clamp((2000-s.z)/2000,0,1);
+      cDom.globalAlpha=sp*.88;cDom.strokeStyle='rgba(255,255,255,.88)';cDom.lineWidth=Math.max(.4,k*1.9);
+      cDom.shadowBlur=0;cDom.beginPath();cDom.moveTo(tx,ty);cDom.lineTo(px,py);cDom.stroke();
     }
+  });
+  cDom.globalAlpha=1;
+  // pulse rings
+  for(let i=0;i<5;i++){
+    const r=55+i*65+((t*28+i*38)%305);const a=1-r/330;if(a<=0)continue;
+    cDom.save();cDom.translate(cx,cy);
+    cDom.strokeStyle=`rgba(168,85,247,${a*.3})`;cDom.shadowColor='#a855f7';cDom.shadowBlur=22;cDom.lineWidth=1.4;
+    cDom.beginPath();cDom.arc(0,0,r,0,Math.PI*2);cDom.stroke();cDom.restore();
+  }
+}
 
-    function spawn(x, y, type, count) {
-      const maxParticles = 720;
-      for (let i = 0; i < count; i++) {
-        if (state.particles.length > maxParticles) state.particles.shift();
-        state.particles.push(new Particle(x, y, type));
+// ─── GESTURE DETECTION ────────────────────────────────
+function fingerExt(h){
+  if(!h)return null;
+  const tips=[8,12,16,20],pips=[6,10,14,18];
+  const ext=tips.map((t,i)=>h[t].y<h[pips[i]].y);
+  return{index:ext[0],middle:ext[1],ring:ext[2],pinky:ext[3],ext};
+}
+
+function isCrossed(h){
+  if(!h)return false;
+  const f=fingerExt(h);if(!f)return false;
+  if(!f.index||!f.middle||f.ring||f.pinky)return false;
+  const d=dist2(h[8],h[12]);
+  const cx=Math.abs(h[8].x-h[12].x)<0.055;
+  const cy2=Math.abs(h[8].y-h[12].y)<0.075;
+  return(cx&&cy2)||d<0.065;
+}
+
+function detectGesture(results){
+  const l=results.leftHandLandmarks,r=results.rightHandLandmarks;
+  let g='IDLE',conf=1;
+
+  if(isCrossed(l)||isCrossed(r)){g='DOMAIN';conf=.95;}
+  else if(l&&r){
+    const lf=fingerExt(l),rf=fingerExt(r);
+    const wd=dist2(l[0],r[0]);
+    const loL=lf.index&&lf.middle&&lf.ring&&lf.pinky;
+    const loR=rf.index&&rf.middle&&rf.ring&&rf.pinky;
+    const lcL=!lf.index&&!lf.middle&&!lf.ring&&!lf.pinky;
+    const lcR=!rf.index&&!rf.middle&&!rf.ring&&!rf.pinky;
+    const td=dist2(l[8],r[8]);
+    if(loL&&loR&&wd<.2){g='INFINITY';conf=.9;}
+    else if(lcL&&lcR&&wd<.2){g='VOID_STEP';conf=.88;}
+    else if(td<0.1){g='PURPLE';conf=.85;}
+    else g='AURA';
+  }
+  else if(l||r){
+    const h=l||r,f=fingerExt(h);
+    const wrist=h[0];
+    const idxUp=f.index&&dist2(h[8],wrist)>0.13;
+    if(idxUp&&!f.middle&&!f.ring&&!f.pinky){g='RED';conf=.9;}
+    else if(dist2(h[4],h[8])<0.046){g='BLUE';conf=.92;}
+    else g='AURA';
+  }
+  else if(results.poseLandmarks){g='AURA';conf=.7;}
+
+  if(dbgOn){
+    const h=l||r;
+    DBG.g.textContent=`Gesture: ${g}`;DBG.c.textContent=`Conf: ${(conf*100).toFixed(0)}%`;
+    DBG.hn.textContent=`Hands: ${l?'L ':''}${r?'R':''}`;
+    if(h)DBG.e.textContent=`Ext: ${fingerExt(h)?.ext.map(e=>e?'1':'0').join('')||'----'}`;
+    DBG.m.textContent=`Mode: ${S.mode}`;
+  }
+  return{gesture:g,conf};
+}
+
+// ─── HOLD SYSTEM ──────────────────────────────────────
+const INSTANT_MODES=['IDLE','AURA'];
+
+function processHold(raw,tp){
+  const now=performance.now();
+  if(raw!==S.holdCandidate){
+    S.holdCandidate=raw;S.holdStart=now;
+    UI.holdWrap.style.display='none';UI.holdBar.style.width='0%';
+  }
+  if(INSTANT_MODES.includes(raw)){if(raw!==S.mode)applyMode(raw,tp);return;}
+  const elapsed=now-S.holdStart,pct=Math.min(elapsed/S.HOLD_MS,1);
+  if(pct<1&&raw!==S.mode){
+    UI.holdWrap.style.display='block';UI.holdBar.style.width=(pct*100)+'%';
+    UI.holdBar.style.background=gColor(raw);UI.holdBar.style.boxShadow=`0 0 8px ${gColor(raw)}`;
+  }
+  if(dbgOn)DBG.h.textContent=`Hold: ${elapsed.toFixed(0)}/${S.HOLD_MS}ms`;
+  if(pct>=1){UI.holdWrap.style.display='none';UI.holdBar.style.width='0%';if(raw!==S.mode)applyMode(raw,tp);}
+}
+
+// ─── MODE APPLICATION ─────────────────────────────────
+function applyMode(m,tp){
+  S.mode=m;UI.mode.textContent=m;AU.stopAll();
+  document.body.classList.remove('quake');
+  cvDom.style.opacity='0';
+
+  const cx=cvMain.width/2,cy=cvMain.height/2;
+  const tx=tp?tp.x:cx,ty=tp?tp.y:cy;
+
+  log(`▶ ${m}`,gColor(m));
+
+  switch(m){
+    case 'IDLE':
+      setTitle('SYSTEM IDLE','#475569','Stand in frame to awaken the Limitless');
+      UI.energy.style.width='0%';resetCharges();break;
+
+    case 'AURA':
+      setTitle('CURSED ENERGY OVERFLOW','#22d3ee','Limitless active — body nodes radiating',true);
+      UI.energy.style.width='35%';
+      AU.amb.volume=.3;AU.amb.play().catch(()=>{});break;
+
+    case 'BLUE':
+      setTitle('MAXIMUM OUTPUT: BLUE','#3b82f6','Gravity singularity — attracting everything',true,'glitch');
+      UI.energy.style.width='100%';S.bluePulse=0;
+      AU.play('blue',.9);log('Lapse: Blue — gravity well forming','#93c5fd');break;
+
+    case 'RED':
+      setTitle('REVERSAL: RED','#ef4444','Cursed energy reversed — maximum repulsion',true);
+      UI.energy.style.width='90%';S.redOrbR=0;document.body.classList.add('quake');
+      AU.play('red',.85);log('Reversal: Red — repulsion field active','#fca5a5');break;
+
+    case 'PURPLE':
+      setTitle('HOLLOW: PURPLE','#a855f7','Imaginary mass erasure — maximum destruction',true);
+      UI.energy.style.width='100%';UI.purple.textContent='ERASE';document.body.classList.add('quake');
+      AU.play('purple',.9);
+      triggerImpact(tx,ty,'purple');spawnCracks(tx,ty,6);
+      spawn(tx,ty,'purple',55);spawn(tx,ty,'debris',85);
+      S.shockwave=1;S.shockCol='#a855f7';
+      for(let i=0;i<6;i++)spawnLightning(rnd(0,cvFx.width),rnd(0,cvFx.height),tx,ty,'#a855f7');
+      log('Hollow Purple — imaginary mass deployed','#d8b4fe');break;
+
+    case 'INFINITY':
+      setTitle('INFINITY: ACTIVE','#22d3ee','Limitless barrier — all attacks return to zero',true);
+      UI.energy.style.width='100%';UI.blue.textContent='∞';UI.red.textContent='∞';UI.purple.textContent='∞';
+      AU.amb.volume=.42;AU.amb.play().catch(()=>{});
+      for(let i=0;i<8;i++)spawnLightning(rnd(0,cvFx.width),rnd(0,cvFx.height),cx,cy,'#22d3ee');
+      spawnRipple(cx,cy,'#22d3ee');log('Infinity — Limitless barrier active','#22d3ee');break;
+
+    case 'VOID_STEP':
+      setTitle('VOID STEP','#f1f5f9','Space-time skipped — instant teleport',true);
+      UI.energy.style.width='85%';document.body.classList.add('quake');
+      AU.amb.volume=.3;AU.amb.play().catch(()=>{});
+      triggerImpact(tx,ty,'blue');spawn(tx,ty,'white',35);spawn(tx,ty,'debris',45);
+      S.shockwave=.82;S.shockCol='#fff';spawnCracks(tx,ty,4);
+      log('Void Step — space-time skipped','#e2e8f0');break;
+
+    case 'DOMAIN':
+      setTitle('RYOIKI TENKAI','domain','Infinite Void — perception floods all senses',true);
+      UI.energy.style.width='100%';
+      document.body.style.filter='contrast(120%) brightness(115%) saturate(140%)';
+      cvDom.style.opacity='1';
+      AU.play('domain',.82);
+      spawn(cx,cy,'purple',65);spawn(cx,cy,'aura-p',45);spawn(cx,cy,'white',35);
+      S.shockwave=1;S.shockCol='#a855f7';
+      spawnCracks(cx,cy,9);
+      for(let i=0;i<10;i++)spawnLightning(rnd(0,cvFx.width),rnd(0,cvFx.height),cx,cy,'#a855f7');
+      spawnRipple(cx,cy,'#a855f7');
+      triggerImpact(cx,cy,'purple');
+      log('RYOIKI TENKAI — MUGEN. Crossed finger sign confirmed.','#e0e7ff');break;
+  }
+  if(m!=='DOMAIN')document.body.style.filter='';
+}
+
+function setTitle(text,col,desc,glow=false,extra=''){
+  const t=UI.title;
+  t.textContent=text;
+  t.className='orb'+(extra?' '+extra:'');
+  if(col==='domain'){
+    t.style.cssText='font-size:26px;font-weight:900;background:linear-gradient(90deg,#fff,#c7d2fe,#818cf8);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;text-transform:uppercase;filter:drop-shadow(0 0 18px rgba(255,255,255,.5))';
+  } else {
+    t.style.cssText=`font-size:26px;font-weight:900;color:${col};text-transform:uppercase;${glow?`text-shadow:0 0 28px ${col},0 0 56px ${col}55`:''}`;
+  }
+  UI.desc.textContent=desc;
+}
+
+function resetCharges(){
+  S.charge.blue=0;S.charge.red=0;
+  UI.blue.textContent='0%';UI.red.textContent='0%';UI.purple.textContent='LOCK';
+  UI.bBlue.style.width='0%';UI.bRed.style.width='0%';UI.bPurple.style.width='0%';
+}
+
+function triggerImpact(x,y,kind='red'){
+  const now=performance.now();if(now-S.lastImpact<280)return;S.lastImpact=now;
+  AU.play('impact',.82);
+  const col=kind==='purple'?'rgba(168,85,247,.28)':kind==='blue'?'rgba(59,130,246,.22)':'rgba(239,68,68,.24)';
+  dmgEl.style.animation='none';void dmgEl.offsetWidth;dmgEl.style.background=col;dmgEl.style.animation='dmgFlash .5s ease-out forwards';
+}
+
+function triggerBlueMax(x,y){
+  log('BLUE MAX — gravity singularity!','#93c5fd');
+  S.shockwave=1;S.shockCol='#3b82f6';
+  S.combo.blueReady=true;S.combo.blueAt=performance.now();
+  AU.play('blue',.95);
+  spawn(x,y,'blue',36);spawn(x,y,'aura',22);spawn(x,y,'debris',36);
+  spawnLightning(x,y,x+(Math.random()-.5)*200,y+(Math.random()-.5)*200,'#3b82f6');
+  spawnRipple(x,y,'#3b82f6');document.body.classList.add('quake');
+  setTimeout(()=>document.body.classList.remove('quake'),500);
+  checkCombo(x,y);
+}
+
+function triggerRedMax(x,y){
+  log('RED MAX — blast released!','#fca5a5');
+  S.shockwave=.9;S.shockCol='#ef4444';
+  S.combo.redReady=true;S.combo.redAt=performance.now();
+  triggerImpact(x,y,'red');spawn(x,y,'red',44);spawn(x,y,'debris',65);
+  spawnRipple(x,y,'#ef4444');checkCombo(x,y);
+}
+
+function checkCombo(x,y){
+  if(S.combo.blueReady&&S.combo.redReady&&Math.abs(S.combo.blueAt-S.combo.redAt)<10000){
+    S.combo.blueReady=S.combo.redReady=false;S.combo.blueAt=S.combo.redAt=0;
+    S.charge.blue=0;S.charge.red=0;
+    log('BLUE+RED COMBO → HOLLOW PURPLE!','#d8b4fe');
+    applyMode('PURPLE',{x,y});
+  }
+}
+
+// ─── MAIN DRAW ────────────────────────────────────────
+function drawFrame(results){
+  const w=cvMain.width,h=cvMain.height,cx=w/2,cy=h/2,t=performance.now();
+
+  // BG
+  const bg=cBg.createRadialGradient(cx,cy,0,cx,cy,Math.max(w,h)*.8);
+  const bgCols={DOMAIN:['#0a0020','#010108'],RED:['#120808','#040106'],BLUE:['#060c18','#020408'],PURPLE:['#0d0514','#040108'],INFINITY:['#050e12','#020608']};
+  const bc=bgCols[S.mode]||['#06080f','#010103'];
+  bg.addColorStop(0,bc[0]);bg.addColorStop(1,bc[1]);
+  cBg.fillStyle=bg;cBg.fillRect(0,0,w,h);
+
+  // Domain background
+  if(S.mode==='DOMAIN')drawDomainBg();
+
+  // Camera + vignette
+  cMain.save();
+  cMain.fillStyle='#000';cMain.fillRect(0,0,w,h);
+  cMain.translate(w,0);cMain.scale(-1,1);
+  cMain.drawImage(results.image,0,0,w,h);
+  const vg=cMain.createRadialGradient(w/2,h/2,h*.18,w/2,h/2,h*.72);
+  vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.38)');
+  cMain.fillStyle=vg;cMain.fillRect(0,0,w,h);
+  cMain.restore();
+
+  // FX canvas (mirrored for hand tracking)
+  cFx.clearRect(0,0,w,h);
+  cFx.save();cFx.translate(w,0);cFx.scale(-1,1);
+
+  // Pose
+  if(results.poseLandmarks){
+    drawConnectors(cFx,results.poseLandmarks,POSE_CONNECTIONS,{color:'rgba(34,211,238,.12)',lineWidth:1});
+    const nodes=[0,11,12,13,14,15,16,23,24,25,26];
+    nodes.forEach(i=>{
+      const n=results.poseLandmarks[i];
+      if(n&&n.visibility>.4&&Math.random()>.32){
+        const type=S.mode==='RED'?'aura-r':S.mode==='PURPLE'?'aura-p':'aura';
+        spawn(n.x*w,n.y*h,type,1);
       }
-    }
-
-    function drawInfinity(c, x, y, intensity = 1) {
-      c.save();
-      c.translate(x, y);
-      const base = 90 + Math.sin(performance.now() * 0.005) * 8;
-      const radius = base + (intensity * 18);
-
-      c.beginPath();
-      c.arc(0, 0, radius + 18, 0, Math.PI * 2);
-      c.strokeStyle = `rgba(34, 211, 238, ${0.08 + 0.05 * intensity})`;
-      c.lineWidth = 2;
-      c.stroke();
-
-      c.beginPath();
-      c.arc(0, 0, radius, 0, Math.PI * 2);
-      c.strokeStyle = `rgba(34, 211, 238, ${0.42 + 0.28 * intensity})`;
-      c.shadowColor = '#22d3ee';
-      c.shadowBlur = 28;
-      c.lineWidth = 4;
-      c.stroke();
-
-      c.beginPath();
-      c.arc(0, 0, radius * 0.55, 0, Math.PI * 2);
-      c.strokeStyle = `rgba(255,255,255, ${0.15 + 0.1 * intensity})`;
-      c.lineWidth = 1.5;
-      c.stroke();
-      c.restore();
-    }
-
-    function drawRedOrb(c, x, y) {
-      state.redOrbRadius = Math.min(state.redOrbRadius + 1.8, 42);
-      state.redOrbSpin += 0.14;
-      c.save();
-      c.translate(x, y);
-
-      const g = c.createRadialGradient(0, 0, 0, 0, 0, state.redOrbRadius * 2.8);
-      g.addColorStop(0, 'rgba(255, 0, 50, 0.85)');
-      g.addColorStop(1, 'rgba(255, 0, 50, 0)');
-      c.beginPath();
-      c.arc(0, 0, state.redOrbRadius * 2.8, 0, Math.PI * 2);
-      c.fillStyle = g;
-      c.fill();
-
-      c.beginPath();
-      c.arc(0, 0, state.redOrbRadius, 0, Math.PI * 2);
-      c.fillStyle = '#ff1744';
-      c.shadowColor = '#ff1744';
-      c.shadowBlur = 28;
-      c.fill();
-
-      c.rotate(state.redOrbSpin);
-      c.beginPath();
-      c.arc(0, 0, state.redOrbRadius * 0.42, 0, Math.PI * 2);
-      c.fillStyle = '#050505';
-      c.shadowBlur = 0;
-      c.fill();
-      c.restore();
-    }
-
-    function drawPurpleBurst(c, x, y) {
-      const t = performance.now();
-      const wave = 50 + (t - state.lastBlastAt) * 0.32;
-      c.save();
-      c.translate(x, y);
-      c.strokeStyle = 'rgba(168, 85, 247, 0.8)';
-      c.lineWidth = 4;
-      c.shadowColor = '#a855f7';
-      c.shadowBlur = 30;
-      c.beginPath();
-      c.arc(0, 0, wave, 0, Math.PI * 2);
-      c.stroke();
-      c.restore();
-    }
-
-    function drawBlueSingularity(c, x, y, scale = 1) {
-      c.save();
-      c.translate(x, y);
-      const pulse = 1 + Math.sin(performance.now() * 0.01) * 0.08;
-      const r = 18 * scale * pulse;
-
-      const outer = c.createRadialGradient(0, 0, 0, 0, 0, r * 8);
-      outer.addColorStop(0, 'rgba(255,255,255,0.15)');
-      outer.addColorStop(0.18, 'rgba(34,211,238,0.28)');
-      outer.addColorStop(0.45, 'rgba(59,130,246,0.18)');
-      outer.addColorStop(1, 'rgba(59,130,246,0)');
-      c.fillStyle = outer;
-      c.beginPath();
-      c.arc(0, 0, r * 8, 0, Math.PI * 2);
-      c.fill();
-
-      c.shadowColor = '#22d3ee';
-      c.shadowBlur = 26;
-      c.strokeStyle = 'rgba(34,211,238,0.9)';
-      c.lineWidth = 3;
-      c.beginPath();
-      c.arc(0, 0, r * 2.2, 0, Math.PI * 2);
-      c.stroke();
-
-      c.fillStyle = '#ffffff';
-      c.beginPath();
-      c.arc(0, 0, r * 0.45, 0, Math.PI * 2);
-      c.fill();
-      c.restore();
-    }
-
-    function triggerBlueMaximum(x, y) {
-      log('MAXIMUM OUTPUT BLUE — GRAVITY SINGULARITY!', 'text-blue-300 font-bold');
-      state.bluePulse = 1;
-      state.shockwave = 1;
-      state.combo.blueReady = true;
-      state.combo.blueAt = performance.now();
-      state.combo.lastReadyAt = state.combo.blueAt;
-      audio.blue.currentTime = 0;
-      audio.blue.volume = 0.95;
-      audio.blue.play().catch(() => {});
-      audio.impact.currentTime = 0;
-      audio.impact.volume = 0.55;
-      audio.impact.play().catch(() => {});
-      spawn(x, y, 'blue', 28);
-      spawn(x, y, 'aura', 18);
-      spawn(x, y, 'debris', 28);
-      document.body.classList.add('quake-triggered');
-      setTimeout(() => document.body.classList.remove('quake-triggered'), 420);
-      if (state.combo.redReady && state.combo.redAt && state.combo.blueAt && state.combo.blueAt < state.combo.redAt) {
-        state.combo.blueReady = false;
-        state.combo.redReady = false;
-        state.combo.blueAt = 0;
-        state.combo.redAt = 0;
-        triggerComboPurple(x, y);
-      }
-    }
-
-    function drawVoidStep(c, x, y) {
-      c.save();
-      c.translate(x, y);
-      c.shadowColor = '#22d3ee';
-      c.shadowBlur = 18;
-      for (let i = 0; i < 2; i++) {
-        c.beginPath();
-        c.arc(0, 0, 45 + i * 18, 0, Math.PI * 2);
-        c.strokeStyle = i === 0 ? 'rgba(255,255,255,0.7)' : 'rgba(34,211,238,0.55)';
-        c.lineWidth = 3 - i;
-        c.stroke();
-      }
-      c.restore();
-    }
-
-    function triggerDamageImpact(x, y, kind = 'red') {
-      const now = performance.now();
-      if (now - state.lastBlastAt < 350) return;
-      state.lastBlastAt = now;
-
-      log('MASSIVE ENERGY DISCHARGE DETECTED!', 'text-red-400 font-bold');
-      audio.impact.currentTime = 0;
-      audio.impact.volume = 0.85;
-      audio.impact.play().catch(() => {});
-
-      damageOverlay.classList.remove('damage-flash-active');
-      void damageOverlay.offsetWidth;
-      damageOverlay.classList.add('damage-flash-active');
-
-      spawn(x, y, 'debris', kind === 'purple' ? 90 : 60);
-      spawn(x, y, kind === 'purple' ? 'purple' : 'red', kind === 'purple' ? 24 : 18);
-      document.body.classList.add('quake-triggered');
-      setTimeout(() => document.body.classList.remove('quake-triggered'), 500);
-    }
-
-    function triggerComboPurple(x, y) {
-      log('BLUE -> RED COMBO — HOLLOW PURPLE AUTO-CREATED!', 'text-purple-300 font-bold');
-      state.charge.purple = 100;
-      ui.purple.textContent = 'ERASE';
-      ui.title.textContent = 'HOLLOW: PURPLE';
-      ui.title.className = 'card-title text-2xl md:text-5xl font-black text-purple-300 uppercase tracking-[0.18em] animate-pulse drop-shadow-[0_0_26px_rgba(168,85,247,0.95)]';
-      ui.desc.textContent = 'Auto-created by Blue then Red combo.';
-      ui.energy.style.width = '100%';
-      triggerDamageImpact(x, y, 'purple');
-      audio.purple.currentTime = 0;
-      audio.purple.volume = 0.95;
-      audio.purple.play().catch(() => {});
-      spawn(x, y, 'purple', 44);
-      spawn(x, y, 'debris', 96);
-      state.combo.blueReady = false;
-      state.combo.redReady = false;
-      state.combo.blueAt = 0;
-      state.combo.redAt = 0;
-      state.charge.blue = 0;
-      state.charge.red = 0;
-      ui.blue.textContent = '0%';
-      ui.red.textContent = '0%';
-    }
-
-    function triggerMaximumBlast(x, y) {
-      log('MAXIMUM OUTPUT REACHED — BLAST RELEASED!', 'text-purple-300 font-bold');
-      state.shockwave = 1;
-      state.combo.redReady = true;
-      state.combo.redAt = performance.now();
-      state.combo.lastReadyAt = state.combo.redAt;
-      triggerDamageImpact(x, y, 'purple');
-      spawn(x, y, 'purple', 40);
-      spawn(x, y, 'debris', 90);
-      audio.purple.currentTime = 0;
-      audio.purple.volume = 0.9;
-      audio.purple.play().catch(() => {});
-      if (state.combo.blueReady && state.combo.blueAt && state.combo.blueAt < state.combo.redAt) {
-        state.combo.blueReady = false;
-        state.combo.redReady = false;
-        state.combo.blueAt = 0;
-        state.combo.redAt = 0;
-        triggerComboPurple(x, y);
-      }
-    }
-
-    // -------------------------------------------------------
-    // CROSSED FINGER DETECTION — Gojo's Domain Expansion sign
-    // Index and middle fingers crossed (index tip crosses over
-    // middle finger's PIP joint horizontally), other fingers folded.
-    // -------------------------------------------------------
-    function isCrossedFingerDomain(h) {
-      if (!h) return false;
-
-      const wrist = h[0];
-      const iTip  = h[8],  iPip  = h[6],  iMcp  = h[5];
-      const mTip  = h[12], mPip  = h[10], mMcp  = h[9];
-      const rTip  = h[16], rPip  = h[14];
-      const pTip  = h[20], pPip  = h[18];
-      const tTip  = h[4];
-
-      // Index and middle must both be extended upward
-      const indexExtended  = iTip.y < iPip.y;
-      const middleExtended = mTip.y < mPip.y;
-
-      // Ring and pinky folded
-      const ringFolded  = rTip.y > rPip.y;
-      const pinkyFolded = pTip.y > pPip.y;
-
-      // The crossing: index tip x should be on the opposite side of
-      // middle tip x compared to their base MCPs
-      // In mirrored camera: left of middle MCP = smaller x
-      // Index naturally sits to the left of middle; crossing = index tip moves right past middle tip
-      const indexCrossedOverMiddle = Math.abs(iTip.x - mTip.x) < 0.045 &&
-                                     Math.abs(iTip.y - mTip.y) < 0.06;
-
-      // Also accept if tips are very close together vertically (the cross)
-      const tipsTouching = dist(iTip, mTip) < 0.055;
-
-      return indexExtended && middleExtended && ringFolded && pinkyFolded &&
-             (indexCrossedOverMiddle || tipsTouching);
-    }
-
-    function analyzeGesture(results) {
-      const l = results.leftHandLandmarks;
-      const r = results.rightHandLandmarks;
-
-      function isHandOpen(h) {
-        if (!h) return false;
-        const index = h[8].y < h[6].y;
-        const middle = h[12].y < h[10].y;
-        const ring = h[16].y < h[14].y;
-        const pinky = h[20].y < h[18].y;
-        return index && middle && ring && pinky;
-      }
-
-      function isHandClosed(h) {
-        if (!h) return false;
-        const index = h[8].y > h[6].y;
-        const middle = h[12].y > h[10].y;
-        const ring = h[16].y > h[14].y;
-        const pinky = h[20].y > h[18].y;
-        return index && middle && ring && pinky;
-      }
-
-      // Check crossed finger on either hand first — Domain Expansion priority
-      if (isCrossedFingerDomain(l) || isCrossedFingerDomain(r)) return 'DOMAIN';
-
-      if (l && r) {
-        const wristsClose = dist(l[0], r[0]) < 0.19;
-        const palmsSpread = dist(l[8], r[8]) > 0.16;
-        const bothOpen = isHandOpen(l) && isHandOpen(r);
-        const bothClosed = isHandClosed(l) && isHandClosed(r);
-
-        if (bothOpen && wristsClose) return 'INFINITY';
-        if (bothClosed && wristsClose) return 'VOID_STEP';
-        if (dist(l[8], r[8]) < 0.12) return 'PURPLE';
-      }
-
-      if ((l && !r) || (!l && r)) {
-        const h = l || r;
-        const iTip = h[8], iPip = h[6];
-        const mTip = h[12], mPip = h[10];
-        const rTip = h[16], rPip = h[14];
-        const pTip = h[20], pPip = h[18];
-        const tTip = h[4];
-        const wrist = h[0];
-
-        const isIndexExtended = iTip.y < iPip.y && dist(iTip, wrist) > 0.15;
-        const isMidFolded = mTip.y > mPip.y;
-        const isRingFolded = rTip.y > rPip.y;
-        const isPinkyFolded = pTip.y > pPip.y;
-
-        if (isIndexExtended && isMidFolded && isRingFolded && isPinkyFolded) return 'RED';
-        if (dist(iTip, tTip) < 0.04) return 'BLUE';
-      }
-
-      return results.poseLandmarks ? 'AURA' : 'IDLE';
-    }
-
-    function setState(newState, results, targetPoint) {
-      if (state.mode === newState) return;
-      state.mode = newState;
-
-      ui.hands.textContent = (results.leftHandLandmarks || results.rightHandLandmarks) ? 'LINKED' : 'SEARCHING';
-      ui.body.textContent = results.poseLandmarks ? 'LINKED' : 'SEARCHING';
-
-      audio.stopExcept(null);
-      document.body.classList.remove('six-eyes-active');
-      domainCanvas.classList.remove('opacity-100');
-      domainCanvas.classList.add('opacity-0');
-
-      switch (newState) {
-        case 'IDLE':
-          ui.title.textContent = 'SYSTEM IDLE';
-          ui.title.className = 'card-title text-2xl md:text-4xl font-black text-slate-400 uppercase tracking-[0.18em]';
-          ui.desc.textContent = 'Stand in frame to awaken the Limitless';
-          ui.energy.style.width = '0%';
-          ui.blue.textContent = '0%';
-          ui.red.textContent = '0%';
-          ui.purple.textContent = 'LOCK';
-          break;
-        case 'AURA':
-          ui.title.textContent = 'CURSED ENERGY: OVERFLOW';
-          ui.title.className = 'card-title text-2xl md:text-4xl font-black text-cyan-300 uppercase tracking-[0.18em] drop-shadow-[0_0_12px_rgba(34,211,238,0.75)]';
-          ui.desc.textContent = 'Limitless active. Body nodes radiating aura.';
-          ui.energy.style.width = '35%';
-          ui.blue.textContent = `${Math.min(100, Number(ui.blue.textContent) || 0)}%`;
-          audio.ambient.volume = 0.32;
-          audio.ambient.play().catch(() => {});
-          break;
-        case 'BLUE':
-          ui.title.textContent = 'MAXIMUM OUTPUT: BLUE';
-          ui.title.className = 'card-title text-2xl md:text-5xl font-black text-blue-300 uppercase tracking-[0.18em] glitch-text drop-shadow-[0_0_28px_rgba(59,130,246,0.95)]';
-          ui.desc.textContent = 'Blue at full output. Gravity singularity locked.';
-          ui.energy.style.width = '100%';
-          audio.blue.currentTime = 0;
-          audio.blue.volume = 0.95;
-          audio.blue.play().catch(() => {});
-          break;
-        case 'RED':
-          ui.title.textContent = 'REVERSAL: RED';
-          ui.title.className = 'card-title text-2xl md:text-4xl font-black text-red-400 uppercase tracking-[0.18em] drop-shadow-[0_0_18px_rgba(239,68,68,0.95)]';
-          ui.desc.textContent = 'Repulsion orb charging to full output.';
-          ui.energy.style.width = '90%';
-          document.body.classList.add('quake-triggered');
-          audio.red.currentTime = 0;
-          audio.red.volume = 0.85;
-          audio.red.play().catch(() => {});
-          break;
-        case 'PURPLE':
-          ui.title.textContent = 'HOLLOW: PURPLE';
-          ui.title.className = 'card-title text-2xl md:text-5xl font-black text-purple-300 uppercase tracking-[0.18em] animate-pulse drop-shadow-[0_0_26px_rgba(168,85,247,0.95)]';
-          ui.desc.textContent = 'Imaginary mass erasure. Maximum destruction output.';
-          ui.energy.style.width = '100%';
-          ui.purple.textContent = 'ERASE';
-          document.body.classList.add('quake-triggered');
-          audio.purple.currentTime = 0;
-          audio.purple.volume = 0.9;
-          audio.purple.play().catch(() => {});
-          if (targetPoint) triggerDamageImpact(targetPoint.x, targetPoint.y, 'purple');
-          break;
-        case 'INFINITY':
-          ui.title.textContent = 'INFINITY: ACTIVE';
-          ui.title.className = 'card-title text-2xl md:text-5xl font-black text-cyan-300 uppercase tracking-[0.18em] drop-shadow-[0_0_28px_rgba(34,211,238,0.95)]';
-          ui.desc.textContent = 'Easy mode: both open hands + wrists close.';
-          ui.energy.style.width = '100%';
-          ui.blue.textContent = '∞';
-          ui.red.textContent = '∞';
-          ui.purple.textContent = '∞';
-          state.infinityPulse = 1;
-          audio.ambient.volume = 0.36;
-          audio.ambient.play().catch(() => {});
-          break;
-        case 'VOID_STEP':
-          ui.title.textContent = 'VOID STEP';
-          ui.title.className = 'card-title text-2xl md:text-5xl font-black text-white uppercase tracking-[0.18em] drop-shadow-[0_0_20px_rgba(255,255,255,0.8)]';
-          ui.desc.textContent = 'Both fists closed + wrists close = instant micro-burst.';
-          ui.energy.style.width = '85%';
-          audio.ambient.volume = 0.28;
-          audio.ambient.play().catch(() => {});
-          if (targetPoint) triggerDamageImpact(targetPoint.x, targetPoint.y, 'blue');
-          break;
-        case 'DOMAIN':
-          ui.title.textContent = 'RYOIKI TENKAI';
-          ui.title.className = 'card-title text-2xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-200 to-indigo-400 uppercase tracking-[0.18em] drop-shadow-[0_0_30px_rgba(255,255,255,0.75)]';
-          ui.desc.textContent = '☞ Cross your index + middle finger — Infinite Void activated.';
-          ui.energy.style.width = '100%';
-          document.body.classList.add('six-eyes-active');
-          domainCanvas.classList.remove('opacity-0');
-          domainCanvas.classList.add('opacity-100');
-          audio.domain.currentTime = 0;
-          audio.domain.volume = 0.8;
-          audio.domain.play().catch(() => {});
-          log('RYOIKI TENKAI — MUGEN. Crossed finger gesture confirmed.', 'text-white font-bold');
-          break;
-      }
-    }
-
-    function drawDomainBackground() {
-      const w = domainCanvas.width, h = domainCanvas.height;
-      dctx.fillStyle = 'rgba(2,2,8,1)';
-      dctx.fillRect(0, 0, w, h);
-      dctx.fillStyle = 'rgba(255,255,255,0.85)';
-
-      if (!state.domainStars.length) {
-        state.domainStars = Array.from({ length: 140 }, () => ({
-          x: Math.random() * 2000 - 1000,
-          y: Math.random() * 2000 - 1000,
-          z: Math.random() * 2000 + 50
-        }));
-      }
-
-      const cx = w / 2, cy = h / 2;
-      for (const s of state.domainStars) {
-        s.z -= 18;
-        if (s.z <= 1) {
-          s.z = 2000;
-          s.x = Math.random() * 2000 - 1000;
-          s.y = Math.random() * 2000 - 1000;
-        }
-        const k = 450 / s.z;
-        const x = s.x * k + cx;
-        const y = s.y * k + cy;
-        if (x > 0 && x < w && y > 0 && y < h) {
-          dctx.beginPath();
-          dctx.arc(x, y, Math.max(0.6, k * 1.4), 0, Math.PI * 2);
-          dctx.fill();
-        }
-      }
-    }
-
-    function drawFrame(results, targetPoint) {
-      const w = mainCanvas.width, h = mainCanvas.height;
-      ctx.save();
-      ctx.clearRect(0, 0, w, h);
-      ctx.translate(w, 0);
-      ctx.scale(-1, 1);
-      ctx.drawImage(results.image, 0, 0, w, h);
-
-      const overlay = ctx.createLinearGradient(0, 0, 0, h);
-      overlay.addColorStop(0, 'rgba(0,0,0,0.08)');
-      overlay.addColorStop(1, 'rgba(0,0,0,0.18)');
-      ctx.fillStyle = overlay;
-      ctx.fillRect(0, 0, w, h);
-
-      if (results.poseLandmarks) {
-        const nodes = [11, 12, 13, 14, 15, 16, 23, 24, 25, 26];
-        for (const i of nodes) {
-          const n = results.poseLandmarks[i];
-          if (n && n.visibility > 0.45 && Math.random() > 0.42) {
-            spawn(n.x * w, n.y * h, 'aura', 1);
-          }
-        }
-        drawConnectors(ctx, results.poseLandmarks, POSE_CONNECTIONS, { color: 'rgba(34, 211, 238, 0.18)', lineWidth: 1 });
-      }
-
-      let handPoint = null;
-      const processHand = (hand, side) => {
-        drawConnectors(ctx, hand, HAND_CONNECTIONS, { color: 'rgba(34, 211, 238, 0.45)', lineWidth: 1 });
-        const tip = { x: hand[8].x * w, y: hand[8].y * h };
-        handPoint = tip;
-
-        if (state.mode === 'BLUE') {
-          spawn(tip.x, tip.y, 'blue', 16);
-          spawn(tip.x, tip.y, 'aura', 4);
-          drawBlueSingularity(ctx, tip.x, tip.y, 0.95);
-          state.charge.blue = clamp(state.charge.blue + 3.8, 0, 100);
-          ui.blue.textContent = `${Math.floor(state.charge.blue)}%`;
-          if (state.charge.blue >= 100) {
-            triggerBlueMaximum(tip.x, tip.y);
-            state.charge.blue = 0;
-            ui.blue.textContent = '0%';
-          }
-        } else if (state.mode === 'RED') {
-          drawRedOrb(ctx, tip.x, tip.y);
-          state.charge.red = clamp(state.charge.red + 2.5, 0, 100);
-          ui.red.textContent = `${Math.floor(state.charge.red)}%`;
-          if (state.charge.red >= 100) {
-            triggerMaximumBlast(tip.x, tip.y);
-            state.charge.red = 0;
-            ui.red.textContent = '0%';
-          }
-        } else if (state.mode === 'PURPLE') {
-          spawn(tip.x, tip.y, 'purple', 10);
-          drawPurpleBurst(ctx, tip.x, tip.y);
-        } else if (state.mode === 'INFINITY') {
-          spawn(tip.x, tip.y, 'aura', 2);
-          drawInfinity(ctx, tip.x, tip.y, 1.25);
-        } else if (state.mode === 'VOID_STEP') {
-          spawn(tip.x, tip.y, 'blue', 4);
-          spawn(tip.x, tip.y, 'aura', 2);
-          drawVoidStep(ctx, tip.x, tip.y);
-        } else if (state.mode === 'DOMAIN') {
-          // Draw crossed finger glow on both finger tips during domain
-          const iTip = { x: hand[8].x * w, y: hand[8].y * h };
-          const mTip = { x: hand[12].x * w, y: hand[12].y * h };
-          ctx.save();
-          ctx.shadowColor = '#ffffff';
-          ctx.shadowBlur = 30;
-          ctx.strokeStyle = 'rgba(255,255,255,0.85)';
-          ctx.lineWidth = 3;
-          ctx.beginPath();
-          ctx.moveTo(iTip.x, iTip.y);
-          ctx.lineTo(mTip.x, mTip.y);
-          ctx.stroke();
-          ctx.restore();
-          spawn(iTip.x, iTip.y, 'aura', 2);
-          spawn(mTip.x, mTip.y, 'aura', 2);
-        }
-      };
-
-      if (results.leftHandLandmarks) processHand(results.leftHandLandmarks, 'left');
-      if (results.rightHandLandmarks) processHand(results.rightHandLandmarks, 'right');
-
-      if (results.poseLandmarks && state.mode !== 'IDLE') {
-        drawInfinity(ctx, w / 2, h / 2, state.mode === 'DOMAIN' ? 1.2 : state.mode === 'INFINITY' ? 1.4 : 0.75);
-      }
-
-      if (state.mode === 'INFINITY') {
-        const pulse = 1 + Math.sin(performance.now() * 0.008) * 0.08;
-        ctx.save();
-        ctx.translate(w / 2, h / 2);
-        ctx.strokeStyle = 'rgba(34, 211, 238, 0.35)';
-        ctx.lineWidth = 2;
-        ctx.shadowColor = '#22d3ee';
-        ctx.shadowBlur = 24;
-        for (let i = 0; i < 3; i++) {
-          ctx.beginPath();
-          ctx.arc(0, 0, (110 + i * 22) * pulse, 0, Math.PI * 2);
-          ctx.stroke();
-        }
-        ctx.restore();
-        spawn(w / 2, h / 2, 'aura', 2);
-      }
-
-      if (state.mode === 'BLUE' && state.charge.blue > 80) {
-        state.bluePulse = Math.min(1, state.bluePulse + 0.03);
-        ctx.save();
-        ctx.globalAlpha = 0.18 + state.bluePulse * 0.22;
-        ctx.fillStyle = '#3b82f6';
-        ctx.fillRect(0, 0, w, h);
-        ctx.restore();
-      }
-
-      if (state.shockwave > 0.01) {
-        ctx.save();
-        ctx.translate(w / 2, h / 2);
-        const r = 40 + (1 - state.shockwave) * Math.max(w, h) * 0.65;
-        ctx.strokeStyle = `rgba(255,255,255,${state.shockwave * 0.75})`;
-        ctx.lineWidth = 5;
-        ctx.shadowColor = '#ffffff';
-        ctx.shadowBlur = 20;
-        ctx.beginPath();
-        ctx.arc(0, 0, r, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.restore();
-        state.shockwave *= 0.92;
-      }
-
-      for (let i = state.particles.length - 1; i >= 0; i--) {
-        const p = state.particles[i];
-        p.update(handPoint);
-        p.draw(ctx);
-        if (p.life <= 0 || p.alpha <= 0) state.particles.splice(i, 1);
-      }
-
-      ctx.restore();
-
-      ui.energy.style.width = `${Math.min(100, Math.max(0, state.energy))}%`;
-      ui.blue.textContent = `${Math.floor(state.charge.blue)}%`;
-      if (state.mode !== 'PURPLE') {
-        ui.purple.textContent = state.charge.purple >= 100 ? 'ERASE' : 'LOCK';
-      }
-    }
-
-    function tickFPS() {
-      state.fpsFrameCount++;
-      const now = performance.now();
-      if (now - state.fpsLast >= 1000) {
-        state.fps = state.fpsFrameCount;
-        ui.fps.textContent = String(state.fps).padStart(2, '0');
-        state.fpsFrameCount = 0;
-        state.fpsLast = now;
-      }
-    }
-
-    function onHolisticResults(results) {
-      tickFPS();
-
-      if (results.poseLandmarks) {
-        ui.body.textContent = 'LINKED';
-        ui.body.className = 'text-right text-green-400 font-bold';
-      } else {
-        ui.body.textContent = 'SEARCHING';
-        ui.body.className = 'text-right text-red-400 font-bold animate-pulse';
-      }
-
-      if (results.leftHandLandmarks || results.rightHandLandmarks) {
-        ui.hands.textContent = 'LINKED';
-        ui.hands.className = 'text-right text-green-400 font-bold';
-      } else {
-        ui.hands.textContent = 'SEARCHING';
-        ui.hands.className = 'text-right text-red-400 font-bold animate-pulse';
-      }
-
-      const nextState = analyzeGesture(results);
-      const targetPoint = results.rightHandLandmarks
-        ? { x: mainCanvas.width - (results.rightHandLandmarks[8].x * mainCanvas.width), y: results.rightHandLandmarks[8].y * mainCanvas.height }
-        : results.leftHandLandmarks
-          ? { x: mainCanvas.width - (results.leftHandLandmarks[8].x * mainCanvas.width), y: results.leftHandLandmarks[8].y * mainCanvas.height }
-          : null;
-
-      if (nextState !== state.mode) {
-        log(`Quantum signature shift: [${nextState}] detected.`, 'text-yellow-300 font-bold');
-        setState(nextState, results, targetPoint);
-      }
-
-      if (results.poseLandmarks) {
-        state.energy = clamp(state.energy + (state.mode === 'RED' ? 3 : state.mode === 'BLUE' ? 3.4 : state.mode === 'PURPLE' ? 4 : state.mode === 'INFINITY' ? 2.5 : state.mode === 'VOID_STEP' ? 2.2 : state.mode === 'DOMAIN' ? 5 : 1), 0, 100);
-      } else {
-        state.energy = clamp(state.energy - 1.2, 0, 100);
-      }
-
-      if (state.mode === 'INFINITY') {
-        state.infinityPulse = Math.max(state.infinityPulse * 0.96, 0.08);
-      }
-
-      if (state.mode === 'DOMAIN') {
-        drawDomainBackground();
-      }
-
-      drawFrame(results, targetPoint);
-    }
-
-    const holistic = new Holistic({
-      locateFile: file => `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}`
     });
+    // Six Eyes glow on face during domain
+    const nose=results.poseLandmarks[0];
+    if(nose&&S.mode==='DOMAIN'){
+      const ex=nose.x*w,ey=nose.y*h;
+      cFx.save();
+      const eg=cFx.createRadialGradient(ex,ey,0,ex,ey,65);
+      eg.addColorStop(0,'rgba(255,255,255,.2)');eg.addColorStop(.4,'rgba(168,85,247,.1)');eg.addColorStop(1,'rgba(168,85,247,0)');
+      cFx.fillStyle=eg;cFx.beginPath();cFx.arc(ex,ey,65,0,Math.PI*2);cFx.fill();
+      cFx.restore();
+      S.sixeyes=Math.min(S.sixeyes+2.5,100);
+    } else {S.sixeyes=Math.max(S.sixeyes-1.2,0);}
+    UI.sixeyes.style.width=S.sixeyes+'%';
+  }
 
-    holistic.setOptions({
-      modelComplexity: 0,
-      smoothLandmarks: true,
-      enableSegmentation: false,
-      refineFaceLandmarks: false,
-      minDetectionConfidence: 0.65,
-      minTrackingConfidence: 0.65
-    });
-    holistic.onResults(onHolisticResults);
+  // Hands processing
+  const processHand=(hand)=>{
+    drawConnectors(cFx,hand,HAND_CONNECTIONS,{color:'rgba(34,211,238,.38)',lineWidth:1.2});
+    const tx2=hand[8].x*w,ty2=hand[8].y*h;
+    if(S.mode==='BLUE'){
+      spawn(tx2,ty2,'blue',20);spawn(tx2,ty2,'aura',5);drawBlue(cFx,tx2,ty2,.95);
+      S.charge.blue=clamp(S.charge.blue+4.2,0,100);
+      UI.blue.textContent=`${S.charge.blue|0}%`;UI.bBlue.style.width=S.charge.blue+'%';
+      if(S.charge.blue>=100){triggerBlueMax(tx2,ty2);S.charge.blue=0;}
+    } else if(S.mode==='RED'){
+      drawRedOrb(cFx,tx2,ty2);spawn(tx2,ty2,'red',4);spawn(tx2,ty2,'aura-r',3);
+      S.charge.red=clamp(S.charge.red+3,0,100);
+      UI.red.textContent=`${S.charge.red|0}%`;UI.bRed.style.width=S.charge.red+'%';
+      if(S.charge.red>=100){triggerRedMax(tx2,ty2);S.charge.red=0;}
+    } else if(S.mode==='PURPLE'){
+      spawn(tx2,ty2,'purple',13);spawn(tx2,ty2,'aura-p',5);drawPurpleBurst(cFx,tx2,ty2);
+    } else if(S.mode==='INFINITY'){
+      spawn(tx2,ty2,'aura',3);drawInfinity(cFx,tx2,ty2,1.3,'rgba(34,211,238,.9)');
+    } else if(S.mode==='VOID_STEP'){
+      spawn(tx2,ty2,'blue',5);spawn(tx2,ty2,'aura',3);drawVoidStep(cFx,tx2,ty2);
+    } else if(S.mode==='DOMAIN'){
+      drawCrossedGlow(cFx,hand,w,h);
+    }
+  };
+  if(results.leftHandLandmarks)processHand(results.leftHandLandmarks);
+  if(results.rightHandLandmarks)processHand(results.rightHandLandmarks);
 
-    ui.start.addEventListener('click', async () => {
-      ui.start.style.display = 'none';
-      log('Booting Holistic AI Core...', 'text-green-400');
-      audio.ambient.volume = 0.28;
-      try { await audio.ambient.play(); } catch (e) { log('Audio blocked by browser policy.', 'text-red-400'); }
+  // Center infinity ring
+  if(S.mode!=='IDLE'){
+    const intensity=S.mode==='DOMAIN'?1.35:S.mode==='INFINITY'?1.55:S.mode==='BLUE'?1.1:.72;
+    const col=S.mode==='DOMAIN'?'rgba(168,85,247,.85)':S.mode==='RED'?'rgba(239,68,68,.75)':S.mode==='PURPLE'?'rgba(168,85,247,.9)':'rgba(34,211,238,.75)';
+    drawInfinity(cFx,cx,cy,intensity,col);
+  }
 
-      const cam = new Camera(video, {
-        width: 1280,
-        height: 720,
-        onFrame: async () => {
-          await holistic.send({ image: video });
-        }
-      });
+  // Infinity extra rings
+  if(S.mode==='INFINITY'){
+    const pulse=1+Math.sin(t*.007)*.1;
+    cFx.save();cFx.translate(cx,cy);cFx.shadowColor='#22d3ee';cFx.shadowBlur=22;
+    for(let i=0;i<5;i++){
+      cFx.strokeStyle=`rgba(34,211,238,${.28-i*.05})`;cFx.lineWidth=1.5;
+      cFx.beginPath();cFx.arc(0,0,(95+i*30)*pulse,0,Math.PI*2);cFx.stroke();
+    }
+    cFx.restore();
+    if(Math.random()>.72)spawnLightning(rnd(cx-220,cx+220),rnd(cy-220,cy+220),cx,cy,'#22d3ee');
+    spawn(cx,cy,'aura',2);
+  }
 
-      cam.start()
-        .then(() => log('Vessel identified. Six Eyes calibrated.', 'text-cyan-300 font-bold'))
-        .catch(err => log(`Fatal feed error: ${err}`, 'text-red-400 font-bold'));
-    });
+  // Blue screen tint
+  if(S.mode==='BLUE'&&S.charge.blue>72){
+    S.bluePulse=Math.min(S.bluePulse+.022,1);
+    cFx.fillStyle=`rgba(59,130,246,${.1+S.bluePulse*.18})`;cFx.fillRect(0,0,w,h);
+  } else S.bluePulse*=.94;
 
-    setState('IDLE', { poseLandmarks: null, leftHandLandmarks: null, rightHandLandmarks: null }, null);
-  </script>
+  // Red shimmer at high charge
+  if(S.mode==='RED'&&S.charge.red>65){
+    cFx.fillStyle=`rgba(239,68,68,${.06+(S.charge.red-65)*.003})`;cFx.fillRect(0,0,w,h);
+  }
+
+  // Shockwave
+  drawShockwave(cFx);
+  cFx.restore();
+
+  // Particles + effects (screen space)
+  const hh=results.leftHandLandmarks||results.rightHandLandmarks;
+  let hx=null,hy=null;
+  if(hh){hx=w-hh[8].x*w;hy=hh[8].y*h;}
+  S.particles=S.particles.filter(p=>{p.update(hx,hy);p.draw(cFx);return p.life>0&&p.alpha>.02;});
+  S.lightnings=S.lightnings.filter(l=>{l.draw(cFx);return l.life>0;});
+  S.cracks=S.cracks.filter(c=>{c.draw(cFx);return c.life>0;});
+  S.ripples=S.ripples.filter(r=>{r.draw(cFx);return r.life>0;});
+
+  // Energy
+  const em={RED:3,BLUE:3.6,PURPLE:4.2,DOMAIN:5.5,INFINITY:2.6,VOID_STEP:2.3,AURA:1,IDLE:-.8};
+  const dl=em[S.mode]||-.8;
+  if(results.poseLandmarks)S.energy=clamp(S.energy+dl,0,100);
+  else S.energy=clamp(S.energy-1.5,0,100);
+  UI.energy.style.width=S.energy+'%';
+}
+
+// ─── FPS ──────────────────────────────────────────────
+function tickFPS(){
+  S.fpsCount++;const now=performance.now();
+  if(now-S.fpsLast>=1000){S.fps=S.fpsCount;UI.fps.textContent=String(S.fps).padStart(2,'0');S.fpsCount=0;S.fpsLast=now;}
+}
+
+// ─── HOLISTIC CALLBACK ────────────────────────────────
+function onResults(results){
+  tickFPS();
+  UI.body.textContent=results.poseLandmarks?'LINKED':'OFFLINE';
+  UI.body.style.color=results.poseLandmarks?'#4ade80':'#fbbf24';
+  const hasH=results.leftHandLandmarks||results.rightHandLandmarks;
+  UI.hands.textContent=hasH?'LINKED':'OFFLINE';
+  UI.hands.style.color=hasH?'#4ade80':'#fbbf24';
+
+  const{gesture}=detectGesture(results);
+  const rh=results.rightHandLandmarks,lh=results.leftHandLandmarks;
+  let tp=null;
+  if(rh)tp={x:cvMain.width-rh[8].x*cvMain.width,y:rh[8].y*cvMain.height};
+  else if(lh)tp={x:cvMain.width-lh[8].x*cvMain.width,y:lh[8].y*cvMain.height};
+
+  processHold(gesture,tp);
+  drawFrame(results);
+}
+
+// ─── BOOT ─────────────────────────────────────────────
+// Add dmg flash keyframe
+const st=document.createElement('style');
+st.textContent='@keyframes dmgFlash{0%{opacity:0}12%{opacity:1}100%{opacity:0}}';
+document.head.appendChild(st);
+
+const holistic=new Holistic({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${f}`});
+holistic.setOptions({modelComplexity:0,smoothLandmarks:true,enableSegmentation:false,refineFaceLandmarks:false,minDetectionConfidence:.62,minTrackingConfidence:.62});
+holistic.onResults(onResults);
+
+document.getElementById('awaken-btn').addEventListener('click',async()=>{
+  document.getElementById('awaken-btn').style.display='none';
+  log('Holistic AI Core booting...','#4ade80');
+  AU.amb.volume=.25;try{await AU.amb.play();}catch(e){log('Audio blocked by browser.','#ef4444');}
+  const cam=new Camera(vid,{width:1280,height:720,onFrame:async()=>{await holistic.send({image:vid});}});
+  cam.start().then(()=>log('Vessel identified. Six Eyes calibrated.','#22d3ee')).catch(e=>log(`Feed error: ${e}`,'#ef4444'));
+});
+
+applyMode('IDLE',null);
+</script>
 </body>
 </html>
