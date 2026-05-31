@@ -34,7 +34,6 @@
 
     body { touch-action: manipulation; }
 
-    /* Performance-friendly effects */
     .six-eyes-active {
       filter: contrast(120%) brightness(110%) saturate(135%);
     }
@@ -146,6 +145,14 @@
       <div class="hud-panel rounded-2xl px-6 py-4 md:px-10 md:py-5 text-center max-w-[92vw]">
         <div id="technique-title" class="card-title text-2xl md:text-4xl font-black text-slate-400 uppercase tracking-[0.18em]">SYSTEM IDLE</div>
         <div id="technique-desc" class="mt-2 text-[11px] md:text-sm uppercase tracking-[0.2em] text-cyan-100/80 font-bold">Stand in frame to awaken the Limitless</div>
+      </div>
+
+      <!-- Gesture guide -->
+      <div class="hud-panel rounded-xl px-4 py-2 text-[10px] uppercase tracking-[0.15em] text-slate-400 text-center">
+        <span class="text-cyan-400">☞ Cross index+middle finger</span> → Ryoiki Tenkai &nbsp;|&nbsp;
+        <span class="text-blue-400">☞ Index+thumb touch</span> → Blue &nbsp;|&nbsp;
+        <span class="text-red-400">☞ Only index up</span> → Red &nbsp;|&nbsp;
+        <span class="text-purple-400">☞ Index tips close</span> → Purple
       </div>
 
       <div class="w-full flex items-end justify-between gap-4 pointer-events-auto px-1 md:px-4 pb-2">
@@ -593,6 +600,43 @@
       }
     }
 
+    // -------------------------------------------------------
+    // CROSSED FINGER DETECTION — Gojo's Domain Expansion sign
+    // Index and middle fingers crossed (index tip crosses over
+    // middle finger's PIP joint horizontally), other fingers folded.
+    // -------------------------------------------------------
+    function isCrossedFingerDomain(h) {
+      if (!h) return false;
+
+      const wrist = h[0];
+      const iTip  = h[8],  iPip  = h[6],  iMcp  = h[5];
+      const mTip  = h[12], mPip  = h[10], mMcp  = h[9];
+      const rTip  = h[16], rPip  = h[14];
+      const pTip  = h[20], pPip  = h[18];
+      const tTip  = h[4];
+
+      // Index and middle must both be extended upward
+      const indexExtended  = iTip.y < iPip.y;
+      const middleExtended = mTip.y < mPip.y;
+
+      // Ring and pinky folded
+      const ringFolded  = rTip.y > rPip.y;
+      const pinkyFolded = pTip.y > pPip.y;
+
+      // The crossing: index tip x should be on the opposite side of
+      // middle tip x compared to their base MCPs
+      // In mirrored camera: left of middle MCP = smaller x
+      // Index naturally sits to the left of middle; crossing = index tip moves right past middle tip
+      const indexCrossedOverMiddle = Math.abs(iTip.x - mTip.x) < 0.045 &&
+                                     Math.abs(iTip.y - mTip.y) < 0.06;
+
+      // Also accept if tips are very close together vertically (the cross)
+      const tipsTouching = dist(iTip, mTip) < 0.055;
+
+      return indexExtended && middleExtended && ringFolded && pinkyFolded &&
+             (indexCrossedOverMiddle || tipsTouching);
+    }
+
     function analyzeGesture(results) {
       const l = results.leftHandLandmarks;
       const r = results.rightHandLandmarks;
@@ -615,6 +659,9 @@
         return index && middle && ring && pinky;
       }
 
+      // Check crossed finger on either hand first — Domain Expansion priority
+      if (isCrossedFingerDomain(l) || isCrossedFingerDomain(r)) return 'DOMAIN';
+
       if (l && r) {
         const wristsClose = dist(l[0], r[0]) < 0.19;
         const palmsSpread = dist(l[8], r[8]) > 0.16;
@@ -623,7 +670,6 @@
 
         if (bothOpen && wristsClose) return 'INFINITY';
         if (bothClosed && wristsClose) return 'VOID_STEP';
-        if (wristsClose && palmsSpread) return 'DOMAIN';
         if (dist(l[8], r[8]) < 0.12) return 'PURPLE';
       }
 
@@ -734,7 +780,7 @@
         case 'DOMAIN':
           ui.title.textContent = 'RYOIKI TENKAI';
           ui.title.className = 'card-title text-2xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-200 to-indigo-400 uppercase tracking-[0.18em] drop-shadow-[0_0_30px_rgba(255,255,255,0.75)]';
-          ui.desc.textContent = 'Infinite Void. Absolute perception flood.';
+          ui.desc.textContent = '☞ Cross your index + middle finger — Infinite Void activated.';
           ui.energy.style.width = '100%';
           document.body.classList.add('six-eyes-active');
           domainCanvas.classList.remove('opacity-0');
@@ -742,6 +788,7 @@
           audio.domain.currentTime = 0;
           audio.domain.volume = 0.8;
           audio.domain.play().catch(() => {});
+          log('RYOIKI TENKAI — MUGEN. Crossed finger gesture confirmed.', 'text-white font-bold');
           break;
       }
     }
@@ -840,6 +887,22 @@
           spawn(tip.x, tip.y, 'blue', 4);
           spawn(tip.x, tip.y, 'aura', 2);
           drawVoidStep(ctx, tip.x, tip.y);
+        } else if (state.mode === 'DOMAIN') {
+          // Draw crossed finger glow on both finger tips during domain
+          const iTip = { x: hand[8].x * w, y: hand[8].y * h };
+          const mTip = { x: hand[12].x * w, y: hand[12].y * h };
+          ctx.save();
+          ctx.shadowColor = '#ffffff';
+          ctx.shadowBlur = 30;
+          ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(iTip.x, iTip.y);
+          ctx.lineTo(mTip.x, mTip.y);
+          ctx.stroke();
+          ctx.restore();
+          spawn(iTip.x, iTip.y, 'aura', 2);
+          spawn(mTip.x, mTip.y, 'aura', 2);
         }
       };
 
@@ -950,7 +1013,7 @@
       }
 
       if (results.poseLandmarks) {
-        state.energy = clamp(state.energy + (state.mode === 'RED' ? 3 : state.mode === 'BLUE' ? 3.4 : state.mode === 'PURPLE' ? 4 : state.mode === 'INFINITY' ? 2.5 : state.mode === 'VOID_STEP' ? 2.2 : 1), 0, 100);
+        state.energy = clamp(state.energy + (state.mode === 'RED' ? 3 : state.mode === 'BLUE' ? 3.4 : state.mode === 'PURPLE' ? 4 : state.mode === 'INFINITY' ? 2.5 : state.mode === 'VOID_STEP' ? 2.2 : state.mode === 'DOMAIN' ? 5 : 1), 0, 100);
       } else {
         state.energy = clamp(state.energy - 1.2, 0, 100);
       }
@@ -999,7 +1062,6 @@
         .catch(err => log(`Fatal feed error: ${err}`, 'text-red-400 font-bold'));
     });
 
-    // initial state
     setState('IDLE', { poseLandmarks: null, leftHandLandmarks: null, rightHandLandmarks: null }, null);
   </script>
 </body>
